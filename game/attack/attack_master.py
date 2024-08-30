@@ -140,6 +140,7 @@ class AttackMaster():
                 skill_method = getattr(self.ctrl, skill_name)
                 time = get_by_key(skill, 'time')
                 param = get_by_key(skill, 'param')
+                print(f"释放技能 {skill_name}")
                 if time:
                     skill_method(time)
                 elif param:
@@ -178,8 +179,8 @@ class AttackMaster():
 
 if __name__ == '__main__':
     attack_master = AttackMaster(None)
-    attack_master.room_skill((1,1))
+    # attack_master.room_skill((1,1))
     # attack_master.hurt_skill()
-    # attack_master.state_skill()
+    attack_master.state_skill()
     # attack_master.buff_skill()
     pass

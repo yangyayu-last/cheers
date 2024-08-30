@@ -149,9 +149,8 @@ if __name__ == '__main__':
         time.sleep(0.1)
         if sadb.draw_screem is None:
             continue
-        cv.imshow('screen', sadb.draw_screem)
+        # cv.imshow('screen', sadb.draw_screem)
         cv.waitKey(1)
-
     # sadb.touch_start(1994,937)
     # while True:
     #     if sadb.last_screen is None:

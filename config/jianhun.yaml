@@ -9,109 +9,113 @@ role_name: 剑魂
 #  2. skill_name=move时 表示移动的方法，param表示移动的方法有两个参数：角度、移动时间，使用param
 #  3. skill_name=attack时 表示攻击的方法，time表示攻击次数
 
-
 # buff技能配置
 buff_skills:
-  - skill_name: skill_q
+#  - skill_name: skill_q
 
-
-
-
-# 状态技能[只需要开启一次的技能]配置
+# 状态技能[只需要开启一次的技能]配置，剑魂只有一个技能破极兵刃
 state_skills:
-#  - skill_name: skill_right
+  - skill_name: skill_q
   # 使用默认持续时间，所以不需要time
 
-
-
-# 觉醒技能释放配置
+# 觉醒技能释放配置，设置移动的原因，为了进入狮子头地图释放大招。
 unique_skills:
   - skill_name: move
-    param: [265, 0.4] # 移动的方法有两个参数，使用param
-  - skill_name: move
-    param: [180, 0.05] # 移动的方法有两个参数，使用param
-  - skill_name: skill_r
-    time: 0.1 # 技能的持续时间 也就是按住不松开的时间
-  - skill_name: skill_r
-  - skill_name: skill_r
-  - skill_name: skill_5
-  - skill_name: skill_5
+    param: [180, 0.4] # 移动的方法有两个参数，使用param
+  - skill_name: skill_w
+    wait: 0.3
+  - skill_name: attack
+    time: 5 # 当是attack时，time表示攻击次数5次
+  - skill_name: attack
+    time: 5 # 当是attack时，time表示攻击次数20次
 
 # 伤害技能配置
+# 大技能为15秒以上，中技能为5-15秒，小技能5秒以内
+# 剑魂的大技能e,r,5,4；中技能2,3；小技能d,f,1
+# 建议设置多套技能组，技能组的技能数量少。这样防止一套技能释放到一半的时候，没有怪，后续还会继续释放空技能。
+# 第一套技能，大技能+中技能，大技能作为一个技能组的开头释放技能，之后补中技能防止漏怪。
+# 第二套技能，小技能，补伤害的，用来衔接，缓解大技能和中技能的cd。
+# 技能测试的时候，一组技能一组技能进行测试。也就是将其他组合技能全部屏蔽，只循环测试一组技能，查看效果。
+
 hurt_skills:
   -
-    - skill_name: skill_w
-    - skill_name: skill_1
+    - skill_name: skill_e
+      wait: 2.5
     - skill_name: attack
       time: 3 # 当是attack时，time表示攻击次数3次
-    - skill_name: skill_1
+    - skill_name: skill_3
+      wait: 1.5
     - skill_name: attack
-    - skill_name: skill_1
-      wait: 0.2
-    - skill_name: attack
-    - skill_name: skill_t
-    - skill_name: skill_t
-
-  -
-    - skill_name: skill_2
-    - skill_name: attack
-      time: 3
-    - skill_name: skill_2
-    - skill_name: attack
-      time: 3
-    - skill_name: skill_2
-    - skill_name: attack
-    - skill_name: skill_2
-    - skill_name: attack
+      time: 4 # 当是attack时，time表示攻击次数3次
 
   -
     - skill_name: skill_d
-    - skill_name: attack
-      time: 2
-    - skill_name: skill_3
-      wait: 0.2
-    - skill_name: skill_3
-    - skill_name: attack
-      time: 3
-    - skill_name: skill_w
-    - skill_name: attack
-
-  -
-    - skill_name: skill_4
       wait: 0.5
-    - skill_name: skill_y
-    - skill_name: skill_y
+    - skill_name: skill_f
+      wait: 0.5
+    - skill_name: skill_1
+      wait: 0.5
     - skill_name: attack
-      time: 3
-    - skill_name: skill_4
-    - skill_name: attack
-      time: 3
+      time: 6 # 当是attack时，time表示攻击次数3次
 
   -
-    - skill_name: skill_5
+    - skill_name: skill_r
       wait: 0.2
-    - skill_name: skill_5
+    - skill_name: skill_r
+      wait: 1.3
     - skill_name: attack
-    - skill_name: skill_5
-    - skill_name: skill_e
+      time: 3 # 当是attack时，time表示攻击次数3次
+    - skill_name: skill_2
+      wait: 1.5
     - skill_name: attack
-      time: 3
-    - skill_name: skill_f
-    - skill_name: attack
-      time: 3
+      time: 7 # 当是attack时，time表示攻击次数3次
 
   -
-    - skill_name: attack
-      time: 3
-    - skill_name: skill_right
-      wait: 0.1
-    - skill_name: skill_up
-      wait: 0.1
-    - skill_name: skill_down
-      wait: 0.1
-    - skill_name: skill_left
-    - skill_name: attack
-      time: 3
+    - skill_name: skill_d
+      wait: 0.5
     - skill_name: skill_f
+      wait: 0.5
+    - skill_name: skill_1
+      wait: 0.5
     - skill_name: attack
-      time: 3
+      time: 4 # 当是attack时，time表示攻击次数3次
+
+  -
+    - skill_name: skill_5
+      wait: 1.6
+    - skill_name: attack
+      time: 3 # 当是attack时，time表示攻击次数3次
+    - skill_name: skill_3
+      wait: 1.5
+    - skill_name: attack
+      time: 6 # 当是attack时，time表示攻击次数3次
+
+  -
+    - skill_name: skill_d
+      wait: 0.5
+    - skill_name: skill_f
+      wait: 0.5
+    - skill_name: skill_1
+      wait: 0.5
+    - skill_name: attack
+      time: 5 # 当是attack时，time表示攻击次数3次
+
+  -
+    - skill_name: skill_4
+      wait: 1.5
+    - skill_name: attack
+      time: 3 # 当是attack时，time表示攻击次数3次
+    - skill_name: skill_2
+      wait: 1.5
+    - skill_name: attack
+      time: 5 # 当是attack时，time表示攻击次数3次
+
+  -
+    - skill_name: skill_d
+      wait: 0.5
+    - skill_name: skill_f
+      wait: 0.5
+    - skill_name: skill_1
+      wait: 0.5
+    - skill_name: attack
+      time: 6 # 当是attack时，time表示攻击次数3次

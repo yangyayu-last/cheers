@@ -24,27 +24,27 @@ state_skills:
 
 
 
-# 觉醒技能释放配置
+# 觉醒技能释放配置，设置移动的原因，为了进入狮子头地图释放大招。
 unique_skills:
   - skill_name: move
     param: [ 265, 0.4 ] # 移动的方法有两个参数，使用param
-  - skill_name: skill_r
+  - skill_name: skill_w
     time: 0.5 # 技能的持续时间 也就是按住不松开的时间
-  - skill_name: skill_r
+  - skill_name: skill_w
   - skill_name: move
     param: [10, 0.1] # 移动的方法有两个参数：角度、移动时间，使用param
-  - skill_name: skill_t
-  - skill_name: skill_t
-  - skill_name: skill_4
-  - skill_name: skill_4
+  - skill_name: skill_f
+  - skill_name: skill_f
+  - skill_name: skill_2
+  - skill_name: skill_2
 
 # 房间技能配置
 room_skills:
   - - room_ij: [ 1, 0 ]
-    - { skill_name: move, param: [ 0, 0.6 ] }
-    - { skill_name: skill_3, time: 0.8 }
+    - { skill_name: move, param: [ 0, 0.6 ], wait: 0.1 }
+    - { skill_name: skill_2, time: 0.8 , wait: 0.2}
     - { skill_name: attack, wait: 0.1}
-    - { skill_name: skill_5}
+    - { skill_name: skill_3, time: 0.8 , wait: 0.2}
 
   - - room_ij: [ 2, 0 ]
     - skill_name: move
@@ -116,51 +116,31 @@ room_skills:
 
 # 伤害技能配置
 hurt_skills:
-  - - { skill_name: skill_q, time: 0.5 }
+  - - { skill_name: skill_d, time: 0.1 }
     - { skill_name: attack, time: 3 }
 
-  - - { skill_name: skill_left, time: 0.1 }
+  - - { skill_name: skill_f, time: 0.1 }
     - { skill_name: attack, time: 3 }
 
-  - - { skill_name: skill_2, time: 0.1 }
+  - - { skill_name: skill_2, time: 0.3 }
     - { skill_name: attack, time: 3 }
 
-  - - { skill_name: skill_q, time: 0.5 }
-    - { skill_name: skill_1, wait: 0.1 }
-    - { skill_name: skill_1, wait: 0.1 }
-    - { skill_name: skill_1, wait: 0.1 }
+  - - { skill_name: skill_3, time: 0.5 }
+    - { skill_name: skill_4, wait: 0.1 }
+#    - { skill_name: skill_5, wait: 1 }
     - { skill_name: attack, time: 2 }
 
-
-  - - { skill_name: skill_down, time: 0.1 }
+  - - { skill_name: skill_2, time: 0.3 }
     - { skill_name: attack, time: 3 }
 
-  - - { skill_name: skill_up, time: 0.1 }
-    - { skill_name: attack, time: 3 }
+  - - { skill_name: skill_3, time: 0.5 }
+    - { skill_name: skill_4, wait: 0.1 }
+#    - { skill_name: skill_5, wait: 1 }
+    - { skill_name: attack, time: 2 }
 
-
-  - - { skill_name: skill_q, time: 0.5 }
-    - { skill_name: skill_left, time: 0.1}
-    - { skill_name: attack, time: 3 }
 
   - - { skill_name: skill_d, time: 0.1 }
     - { skill_name: attack, time: 3 }
 
-
-  - - { skill_name: skill_4, time: 0.1 }
-    - { skill_name: skill_f, time: 0.1 }
+  - - { skill_name: skill_f, time: 0.1 }
     - { skill_name: attack, time: 3 }
-
-  - - { skill_name: skill_e, wait: 0.1 }
-    - { skill_name: attack, time: 3 }
-
-
-  - - { skill_name: skill_1, wait: 0.1 }
-    - { skill_name: skill_3, wait: 0.1 }
-    - { skill_name: attack}
-    - { skill_name: skill_w, wait: 0.1 }
-
-
-  - - { skill_name: skill_1, time: 0.1 }
-    - { skill_name: skill_3, time: 0.1 }
-    - { skill_name: skill_w, time: 0.1 }

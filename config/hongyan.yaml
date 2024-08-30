@@ -25,7 +25,7 @@ state_skills:
 
 
 
-# 觉醒技能释放配置
+# 觉醒技能释放配置，设置移动的原因，为了进入狮子头地图释放大招。
 unique_skills:
   #  - skill_name: attack
   #    wait: 0.5

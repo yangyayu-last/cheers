@@ -6,6 +6,7 @@ from typing import Tuple
 from game.attack.attack_master import AttackMaster
 from utils import room_calutil
 from utils.cvmatch import image_match_util
+from utils.dnf_config import DnfConfig
 from utils.template_util import TemplateUtil
 from utils.yolov5 import YoloV5s
 from game.game_control import GameControl
@@ -76,10 +77,17 @@ def calc_angle(x1, y1, x2, y2):
     angle = math.atan2(y1 - y2, x1 - x2)
     return 180 - int(angle * 180 / math.pi)
 
+# 传递x,y坐标，offset为要偏移的坐标幅度，之后得到一个随机幅度的x，y坐标
+def random_xy(self, x, y,offset):
+    x = x + random.randint(-offset, offset)
+    y = y + random.randint(-offset, offset)
+    return x,y
+
 
 class GameAction:
 
     def __init__(self, ctrl: GameControl):
+        self.global_cfg = DnfConfig()
         self.ctrl = ctrl
         self.global_cfg = ctrl.adb.global_cfg
         self.param = GameParamVO()
@@ -96,9 +104,17 @@ class GameAction:
                 time.sleep(0.01)
                 continue
             result = self.ctrl.adb.result
-            cv.imshow('screen', screen)
+            self.cv_show(screen)
             cv.waitKey(1)
             return screen, result
+
+    def cv_show(self, screen):
+        """
+        判断是否需要展示窗口页面
+        """
+        show = self.global_cfg.get_by_key("scrcpy_show_window")
+        if show:
+            cv.imshow('screen', screen)
 
     def display_image(self, screen, result):
         if screen is None:
@@ -114,26 +130,24 @@ class GameAction:
             text = f"{self.yolo.class_names[int(obj.label)]}:{obj.prob:.2f}"
             self.adb.plot_one_box([obj.rect.x, obj.rect.y, obj.rect.x + obj.rect.w, obj.rect.y + obj.rect.h], screen,
                                   color=color, label=text, line_thickness=2)
-        cv.imshow('screen', screen)
+        self.cv_show(screen)
         cv.waitKey(1)
 
     def get_cur_room_index(self):
-        """
-        获取当前房间的索引，需要看地图
-        :return:
-        """
         route_map = None
         result = None
         fail_cnt = 0
         while True:
-            self.ctrl.click(2105, 128)
+            ##### 修改位置(2462, 173)
+            self.ctrl.click(2462, 173)
             time.sleep(0.5)
-            # screen = self.ctrl.adb.last_screen
-            # if screen is None:
-            #     continue
-            # result = self.yolo(screen)
-            screen, result = self.find_result()
-            # self.display_image(screen, result)
+            screen = self.ctrl.adb.last_screen
+            if screen is None:
+                continue
+            start_time = time.time()
+            result = self.yolo(screen)
+            print(f'匹配地图点耗时：{(time.time() - start_time) * 1000}ms...')
+            self.display_image(screen, result)
             route_map = self.find_one_tag(result, 'map')
             if route_map is not None:
                 break
@@ -146,19 +160,16 @@ class GameAction:
 
         if route_map is not None:
             time.sleep(0.2)
-            # 关闭地图
-            _, result2 = self.find_result()
-            tmp = self.find_one_tag(result2, 'map')
+            tmp = self.find_one_tag(self.yolo(self.ctrl.adb.last_screen), 'map')
             if tmp is not None:
-                self.ctrl.click(2105, 128)
+                ##### 修改位置(2462, 173)
+                self.ctrl.click(2462, 173)
             point = self.find_one_tag(result, 'point')
             if point is None:
                 return None, None, None
-            # 转换成中心点的坐标
             point = get_detect_obj_center(point)
             route_id, cur_room = room_calutil.get_cur_room_index(point)
             return route_id, cur_room, point
-
         return None, None, None
 
     def move_to_next_room(self):
@@ -526,7 +537,7 @@ class GameAction:
         cv.circle(screen, (hx, hy), 5, (0, 255, 0), 5)
         cv.circle(screen, (ax, ay), 5, (0, 255, 255), 5)
         cv.arrowedLine(screen, (hx, hy), (ax, ay), (255, 0, 0), 3)
-        cv.imshow('screen', screen)
+        self.cv_show(screen)
         cv.waitKey(1)
 
 
@@ -563,65 +574,83 @@ class GameAction:
             screen, result = self.find_result()
 
             card = self.find_tag(result, 'card')
-            select = self.find_tag(result, 'select')
+            # select = self.find_tag(result, 'select')
             start = self.find_tag(result, 'start')
 
+            # select用于开始的时候切换普通和冒险图，因为模型没有识别出来，所以暂时先注释掉
+            # if len(select) > 0:
+            #     self.ctrl.click(294,313)
+            #     time.sleep(0.5)
+            #     self.ctrl.click(1640,834)
+            #     return
             if len(start) > 0:
-                time.sleep(0.5)
-                self.ctrl.click(1889, 917)
+                time.sleep(random.uniform(1, 3))
+                # 加入坐标偏移
+                x, y = self.random_xy(2177, 1031, 5)
+                self.ctrl.click(x, y)
                 return
-            elif len(select) > 0:
-                self.ctrl.click(294,313)
-                time.sleep(0.5)
-                self.ctrl.click(1640,834)
-                return
-            elif len(card) > 0:
+            if len(card) > 0:
                 print('打完了，去翻牌子')
-                time.sleep(3)
-                # 翻第三个牌子
-                self.ctrl.click(1398,377)
-                time.sleep(0.5)
-                self.ctrl.click(1398,377)
-                time.sleep(1.5)
+                # 第一块牌子的坐标（上）：727，400第二块（上）：1164,400，第三块（上）：1596,400，第四块（上）：2047,400
+                card_xy = [(727, 400), (1164, 400), (1596, 400), (2047, 400)]
+                # 加入随机坐标和随机偏移
+                x, y = random.choice(card_xy)
+                x, y = self.random_xy(x, y, 10)
+                # 加入随机时间
+                time.sleep(random.uniform(1, 3))
+                self.ctrl.click(x, y)
+                time.sleep(random.uniform(0.5, 1))
+                self.ctrl.click(x, y)
+                time.sleep(random.uniform(1, 1.5))
                 self.param.cur_room = (1, 5)
-
                 return
             else:
                 return
 
     def again(self):
+        print(f'当前房间号{self.param.cur_room}')
         try:
-            if self.param.cur_room != (1, 5) and self.param.cur_room != (1, 4):
+            # 截取区域 xywh
+            crop = (2141, 110, 500, 110)
+            crop = tuple(int(value * room_calutil.zoom_ratio) for value in crop)
+            # 模版匹配再次挑战按钮
+            result = image_match_util.match_template_best(self.again_button_img, self.ctrl.adb.last_screen, crop)
+            if result is None:
                 return
+            # 通过房间号来判断，但如果重新启动py程序的时候，就会导致参数被初始化为（1，0）。进而无法继续游戏
+            # if self.param.cur_room != (1, 5) and self.param.cur_room != (1, 4):
+            #     return
             screen, result = self.find_result()
-            if len(self.find_tag(result, ['equipment','Monster', 'Monster_ds', 'Monster_szt'])) > 0:
+            if len(self.find_tag(result, 'equipment')) > 0:
                 return
 
-            # 初始化找模版工具
-            template_util = TemplateUtil()
             # 发现修理装备，就修理
-            screen = self.ctrl.adb.last_screen
-            repair_res = template_util.find_template('repair_equipment',screen)
+            crop = (2148, 444, 450, 92)
+            crop = tuple(int(value * room_calutil.zoom_ratio) for value in crop)
+            repair_res = image_match_util.match_template_best(self.repair_equipment, self.ctrl.adb.last_screen, crop)
             if repair_res is not None:
                 print('发现修理装备按钮,点击修理装备')
-                # x, y, w, h = repair_res['rect']
-                self.ctrl.click(repair_res[0] / self.ctrl.adb.zoom_ratio, repair_res[1] / self.ctrl.adb.zoom_ratio)
+                x, y, w, h = repair_res['rect']
+                self.ctrl.click((x + w / 2) / self.ctrl.adb.zoom_ratio, (y + h / 2) / self.ctrl.adb.zoom_ratio)
                 time.sleep(0.8)
                 # 点击修理
-                self.ctrl.click(1056, 950)
+                self.ctrl.click(1320, 1091)
                 time.sleep(0.8)
-                self.ctrl.click(repair_res[0] / self.ctrl.adb.zoom_ratio, repair_res[1] / self.ctrl.adb.zoom_ratio)
+                self.ctrl.click((x + w / 2) / self.ctrl.adb.zoom_ratio, (y + h / 2) / self.ctrl.adb.zoom_ratio)
                 time.sleep(0.2)
 
-            # 截取区域 xywh，在电脑用截图工具拿到
-            again_btn = template_util.find_template('re_enter',screen)
-            if again_btn is None:
+            # 截取区域 xywh
+            crop = (2141, 110, 500, 110)
+            crop = tuple(int(value * room_calutil.zoom_ratio) for value in crop)
+            # 模版匹配再次挑战按钮
+            result = image_match_util.match_template_best(self.again_button_img, self.ctrl.adb.last_screen, crop)
+            if result is None:
                 return
 
             # 发现了再次挑战，就重开
             print('发现再次挑战按钮,点击重开')
-            # x, y, w, h = result['rect'] #{'confidence': 0.748958170413971, 'rect': (1129, 129, 128, 24)}
-            self.ctrl.click(again_btn[0] / self.ctrl.adb.zoom_ratio, again_btn[1] / self.ctrl.adb.zoom_ratio)
+            x, y, w, h = result['rect']
+            self.ctrl.click((x + w / 2) / self.ctrl.adb.zoom_ratio, (y + h / 2) / self.ctrl.adb.zoom_ratio)
             print('成功点击再次挑战按钮')
             time.sleep(0.8)
             self.ctrl.click(1304, 691)
@@ -630,8 +659,6 @@ class GameAction:
 
         except Exception as e:
             print('没有找到再次挑战按钮:', e)
-
-
     def test(self):
         print(f'开始释放房间{self.param.cur_room}的固定技能。。。')
         self.attack.room_skill(self.param.cur_room)
