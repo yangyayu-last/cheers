@@ -17,7 +17,7 @@ class ScrcpyADB:
                             prob_threshold=0.25,
                             nms_threshold=0.45,
                             num_threads=4,
-                            use_gpu=False)
+                            use_gpu=True)
         devices = adb.device_list()
         client = scrcpy.Client(device=devices[0], max_width=max_width,max_fps=3,bitrate = 180)
         # You can also pass an ADBClient instance to it
