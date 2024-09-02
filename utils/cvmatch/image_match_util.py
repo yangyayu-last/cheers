@@ -495,7 +495,7 @@ def match_template(im_search, im_source):
         im_source = cv2.cvtColor(im_source, cv2.COLOR_BGR2GRAY)
     # 初始化创建
     sift = cv2.SIFT_create()
-
+    # sift = cv2.xfeatures2d.SURF_create()
     # 关键点检测和特征计算
     kp1, des1 = sift.detectAndCompute(im_search, None)
     kp2, des2 = sift.detectAndCompute(im_source, None)

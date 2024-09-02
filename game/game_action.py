@@ -77,11 +77,6 @@ def calc_angle(x1, y1, x2, y2):
     angle = math.atan2(y1 - y2, x1 - x2)
     return 180 - int(angle * 180 / math.pi)
 
-# 传递x,y坐标，offset为要偏移的坐标幅度，之后得到一个随机幅度的x，y坐标
-def random_xy(self, x, y,offset):
-    x = x + random.randint(-offset, offset)
-    y = y + random.randint(-offset, offset)
-    return x,y
 
 
 class GameAction:
@@ -94,8 +89,30 @@ class GameAction:
         self.attack = AttackMaster(ctrl)
         self.yolo = self.ctrl.adb.yolo
         self.adb = self.ctrl.adb
+
+        # 获取当前脚本的绝对路径
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+
+        # 构造相对路径
+        again_button_path = '../template/re_enter/again_button.jpg'
+        image_path = os.path.join(script_dir, again_button_path)
+
+        repair_equipment_path = '../template/repair_equipment/repair_equipment.png'
+        image_path2 = os.path.join(script_dir, repair_equipment_path)
+
+        # 再次挑战
+        self.again_button_img = cv.imread(image_path)
+        # 修理装备
+        self.repair_equipment = cv.imread(image_path2)
+
         # todo 稳定后可根据配置加载不同地图
         room_calutil.load_map_template('bwj_room')
+
+    # 传递x,y坐标，offset为要偏移的坐标幅度，之后得到一个随机幅度的x，y坐标
+    def random_xy(self, x, y, offset):
+        x = x + random.randint(-offset, offset)
+        y = y + random.randint(-offset, offset)
+        return x, y
 
     def find_result(self):
         while True:
@@ -302,7 +319,7 @@ class GameAction:
         """
         找不到英雄或卡墙了，随机移动，攻击几下
         :param result:
-        :param t:
+        :param mov_time:
         :return:
         """
         if result is not None and self.find_one_tag(result, 'hero') is not None:
@@ -574,20 +591,21 @@ class GameAction:
             screen, result = self.find_result()
 
             card = self.find_tag(result, 'card')
-            # select = self.find_tag(result, 'select')
+            select = self.find_tag(result, 'select')
             start = self.find_tag(result, 'start')
 
             # select用于开始的时候切换普通和冒险图，因为模型没有识别出来，所以暂时先注释掉
-            # if len(select) > 0:
-            #     self.ctrl.click(294,313)
-            #     time.sleep(0.5)
-            #     self.ctrl.click(1640,834)
-            #     return
+            if len(select) > 0:
+                self.ctrl.click(294,313)
+                time.sleep(0.5)
+                self.ctrl.click(1640,834)
+                return
             if len(start) > 0:
                 time.sleep(random.uniform(1, 3))
                 # 加入坐标偏移
-                x, y = self.random_xy(2177, 1031, 5)
-                self.ctrl.click(x, y)
+                # x, y = self.random_xy(2177, 1031, 5)
+                # self.ctrl.click(x, y)
+                self.ctrl.click(1889, 917)
                 return
             if len(card) > 0:
                 print('打完了，去翻牌子')
