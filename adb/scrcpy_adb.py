@@ -11,7 +11,7 @@ from utils.yolov5 import YoloV5s
 
 
 class ScrcpyADB:
-    def __init__(self, max_width=234, real_width=2340):
+    def __init__(self, max_width=0, real_width=2340):
         self.global_cfg = DnfConfig()
         self.yolo = YoloV5s(target_size=640,
                             prob_threshold=0.25,
@@ -19,7 +19,7 @@ class ScrcpyADB:
                             num_threads=4,
                             use_gpu=True)
         devices = adb.device_list()
-        client = scrcpy.Client(device=devices[0], max_width=max_width,max_fps=3,bitrate = 180)
+        client = scrcpy.Client(device=devices[0], max_width=max_width,max_fps=15,bitrate = 8000000)
         # You can also pass an ADBClient instance to it
         adb.connect(self.global_cfg.get_by_key('device'))
         print(devices, client)
@@ -29,8 +29,8 @@ class ScrcpyADB:
         self.last_screen = None
         self.draw_screem = None
         self.result = None
-        # self.window_size = (0, 0)  # 窗口大小 宽高 w,h
-        self.window_size = (720, 480)  # 窗口大小 宽高 w,h
+        self.window_size = (0, 0)  # 窗口大小 宽高 w,h
+        # self.window_size = (720, 480)  # 窗口大小 宽高 w,h
         client.add_listener(scrcpy.EVENT_FRAME, self.on_frame)
         client.start(threaded=True)
         self.client = client

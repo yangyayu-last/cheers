@@ -156,7 +156,7 @@ class GameAction:
         fail_cnt = 0
         while True:
             ##### 修改位置(2462, 173)
-            self.ctrl.click(2462, 173)
+            self.ctrl.click(2120, 144)
             time.sleep(0.5)
             screen = self.ctrl.adb.last_screen
             if screen is None:

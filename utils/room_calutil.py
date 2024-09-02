@@ -72,7 +72,8 @@ def get_cur_room_index(point):
     # 锁定获取的范围和每个房间方块的大小
     # Rect从投屏画面中获取区域左上角x,y和w，h
     # xy = rect_slice_index(Rect(504, 225, 376, 187), Size((6, 3)), point)
-    xy = rect_slice_index(Rect(1000, 436, 715, 351), Size((6, 3)), point)
+    # xy = rect_slice_index(Rect(1000, 436, 715, 351), Size((6, 3)), point)
+    xy = rect_slice_index(Rect(818, 404, 689, 308), Size((6, 3)), point)
     # 遍历room_route
     cur_ind = None
 

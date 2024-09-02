@@ -1,7 +1,17 @@
 # 项目全局配置
 
+#需要调整小地图和大地图坐标
+#大地图坐标为room_calutil.get_cur_room_index()
+#其中818(x1) 404(y1)为大地图左上角坐标点,1507(x2) 712(y2)为大地图右下角坐标点，689为x2-x1=w，308为y2-y1=h
+#  xy = rect_slice_index(Rect(818, 404, 689, 308), Size((6, 3)), point)
+
+#小地图:
+#其中2120,144为小地图在手机上的坐标点
+#game_action.get_cur_room_index(),self.ctrl.click(2120, 144)
+
+
 #是否在pc展示手机画面
-scrcpy_show_window: True
+scrcpy_show_window: False
 
 # 链接的设备名或ip端口
 #device: adb-24ed1083-yGX7n1._adb-tls-connect._tcp.
