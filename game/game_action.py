@@ -4,6 +4,7 @@ import traceback
 from typing import Tuple
 
 from game.attack.attack_master import AttackMaster
+from logger import log
 from utils import room_calutil
 from utils.cvmatch import image_match_util
 from utils.dnf_config import DnfConfig
@@ -180,7 +181,7 @@ class GameAction:
             tmp = self.find_one_tag(self.yolo(self.ctrl.adb.last_screen), 'map')
             if tmp is not None:
                 ##### 修改位置(2462, 173)
-                self.ctrl.click(2462, 173)
+                self.ctrl.click(2120, 144)
             point = self.find_one_tag(result, 'point')
             if point is None:
                 return None, None, None
@@ -223,6 +224,7 @@ class GameAction:
             if direction is None:
                 # route_id, cur_room, point = self.get_cur_room_index()
                 flag, cur_room = room_calutil.find_cur_room(self.adb.last_screen)
+                self.param.cur_room = cur_room
                 if flag is False:
                     route_id, cur_room, point = self.get_cur_room_index()
                 if cur_room is None:
@@ -670,8 +672,9 @@ class GameAction:
             x, y, w, h = result['rect']
             self.ctrl.click((x + w / 2) / self.ctrl.adb.zoom_ratio, (y + h / 2) / self.ctrl.adb.zoom_ratio)
             print('成功点击再次挑战按钮')
-            time.sleep(0.8)
-            self.ctrl.click(1304, 691)
+            time.sleep(2)
+            # self.ctrl.click(1304, 691)
+            self.ctrl.click(1306, 689)
             # 初始化参数
             self.param = GameParamVO()
 
@@ -689,6 +692,7 @@ def run():
 
     while True:
         try:
+            # log.logger.info('测试')
             # 根据出现的元素分配动作
             if len(action.find_tag(action.find_result()[1], 'equipment'))>0:
                 print('--------------------------------发现装备，开始捡起装备--------------------------------')
