@@ -1,7 +1,7 @@
 import json
 import os
 import time
-
+from logger import log
 import cv2
 
 from utils.cvmatch import image_match_util
@@ -33,11 +33,11 @@ class TemplateUtil:
         """
         try:
             if screen is None:
-                print('未获取到屏幕')
+                log.logger.info('未获取到屏幕')
                 return None
             self.load_template(name)
             if isinstance(self.cfgs, list):
-                print('模板配置不支持次方法')
+                log.logger.info('模板配置不支持次方法')
                 return None
             # 识别区域
             crop = self.cfgs['rect']
@@ -51,5 +51,5 @@ class TemplateUtil:
                     return x + w / 2, y + h / 2
             return None
         except Exception as e:
-            print(f'查找模版{name}出现异常。{e}')
+            log.logger.info(f'查找模版{name}出现异常。{e}')
             return None

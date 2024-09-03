@@ -4,6 +4,7 @@ from time import sleep
 import cv2
 import yaml
 
+from logger import log
 from game import GameControl
 from utils import dnf_config, room_calutil
 from utils.dnf_config import DnfConfig
@@ -36,7 +37,7 @@ class AttackMaster():
         self.role_yaml = role_yaml.cur_yaml
         # 记录伤害技能到第几个了
         self.skill_cnt = 0
-        print(self.role_yaml)
+        log.logger.info(self.role_yaml)
 
     def state_skill(self):
         """
@@ -101,14 +102,14 @@ class AttackMaster():
         # cv2.imshow("skill_icon", skill_icon)
         # cv2.imshow("thresholded", thresholded)
         # cv2.waitKey(1)
-        # print(f'技能{skill}非零像素数量:{non_zero_pixels} 阈值:{some_threshold}')
+        # log.logger.info(f'技能{skill}非零像素数量:{non_zero_pixels} 阈值:{some_threshold}')
 
         # 如果非零像素数量小于某个阈值，说明图标是灰色的，技能正在冷却
         if non_zero_pixels < some_threshold:  # 你可以根据实际情况调整阈值
-            print(f"技能 {skill}，正在冷却中...")
+            log.logger.info(f"技能 {skill}，正在冷却中...")
             return False
         else:
-            print(f"技能 {skill}，完成冷却，可以释放")
+            log.logger.info(f"技能 {skill}，完成冷却，可以释放")
             return True
 
     def release_skill(self, skill_type='buff_skills'):
@@ -120,11 +121,11 @@ class AttackMaster():
         if skill_type == "hurt_skills":
             i = self.skill_cnt % len(buff_skills)
             buff_skills = buff_skills[i]
-            print(f'...正在释放【{role_name}】的第【{i}】套技能连招...')
+            log.logger.info(f'...正在释放【{role_name}】的第【{i}】套技能连招...')
             self.skill_cnt = i + 1
 
         else:
-            print(f'...正在释放【{role_name}】的【{skill_type}】技能...')
+            log.logger.info(f'...正在释放【{role_name}】的【{skill_type}】技能...')
         self.do_skills(buff_skills)
 
     def do_skills(self, buff_skills,if_vaild=True):
@@ -140,7 +141,7 @@ class AttackMaster():
                 skill_method = getattr(self.ctrl, skill_name)
                 time = get_by_key(skill, 'time')
                 param = get_by_key(skill, 'param')
-                print(f"释放技能 {skill_name}")
+                log.logger.info(f"释放技能 {skill_name}")
                 if time:
                     skill_method(time)
                 elif param:
@@ -152,7 +153,7 @@ class AttackMaster():
                 if wait:
                     sleep(wait)
             except Exception as e:
-                print(e)
+                log.logger.info(e)
 
     def room_skill(self, cur_room):
         """
@@ -164,16 +165,16 @@ class AttackMaster():
         # elif skill_type == "room_skills":
         buff_skills = get_by_key(self.role_yaml, 'room_skills')
         if buff_skills is None:
-            print(f'...所有房间技能未配置...')
+            log.logger.info(f'...所有房间技能未配置...')
             return
         for skill in buff_skills:
             room = get_by_key(skill, 0,'room_ij')
             if cur_room == tuple(room):
-                print(f'...正在释放【{cur_room}】房间技能...')
+                log.logger.info(f'...正在释放【{cur_room}】房间技能...')
                 buff_skills = skill[1:]
                 self.do_skills(buff_skills)
                 return
-        print(f'...【{cur_room}】房间技能未配置...')
+        log.logger.info(f'...【{cur_room}】房间技能未配置...')
 
 
 

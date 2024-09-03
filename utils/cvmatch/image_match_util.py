@@ -1,6 +1,7 @@
 # sift FLANN matcher
 import time
 
+from logger import log
 import numpy as np
 import cv2
 
@@ -453,9 +454,9 @@ def find_template_result(im_search, im_source, kp1, kp2, matches,threshold=0.8,m
         try:
             rect, confidence = extract_good_points(im_source=im_source, im_search=im_search, kp_src=kp_src,
                                                         kp_sch=kp_sch, good=filtered_good_point, angle=angle, rgb=rgb)
-            # print(f'good:{len(filtered_good_point)}, rect={rect}, confidence={confidence}')
+            # log.logger.info(f'good:{len(filtered_good_point)}, rect={rect}, confidence={confidence}')
         except Exception as e:
-            print(f'extract_good_points error:{e}')
+            log.logger.info(f'extract_good_points error:{e}')
             pass
         finally:
 
@@ -508,7 +509,7 @@ def match_template(im_search, im_source):
     # 第一个参数是模版，第二个是原图
     matches = flann.knnMatch(des1, des2, k=min(2, des2.shape[0]))
     res = find_template_result(im_search, im_source, kp1, kp2, matches, threshold=0.5)
-    print(f'模版匹配耗时检测，time:{int((time.time() - s)*1000)}ms')
+    log.logger.info(f'模版匹配耗时检测，time:{int((time.time() - s)*1000)}ms')
     return res
 
 
@@ -543,7 +544,7 @@ def match_template_best(im_search, im_source, *crop, resize_rate=1):
             res['rect'] = (int(rect[0] / resize_rate + x), int(rect[1] / resize_rate + y), int(rect[2] / resize_rate), int(rect[3] / resize_rate))
         return res
     except Exception as e:
-        print(f'match_template_best error:{e}')
+        log.logger.info(f'match_template_best error:{e}')
         return None
 
 
@@ -565,7 +566,7 @@ def cvmatch_template_best(im_search, im_source, *crop):
         im_source = im_source[y:y + h, x:x + w]
 
         if im_source.shape[0] < m_h or im_source.shape[1] < m_w:
-            print('模板大小大于原图')
+            log.logger.info('模板大小大于原图')
             return None
         # cv2.TM_CCOEFF_NORMED: 归一化的相关系数，值越接近1，表示相似度越高。
         # cv2.TM_SQDIFF: 绝对平方差，值越接近0表示越相似（与其他方法相反，数值越小越好）。
@@ -580,7 +581,7 @@ def cvmatch_template_best(im_search, im_source, *crop):
         rect, confidence = (rx, ry, rw, rh), max_val
         return generate_result(rect, confidence)
     except Exception as e:
-        print(f'cvmatch_template_best error:{e}')
+        log.logger.info(f'cvmatch_template_best error:{e}')
         return None
 
 if __name__ == '__main__':
@@ -591,10 +592,10 @@ if __name__ == '__main__':
     s = time.time()
     crop = (1090, 60, 180, 180)
     result = match_template_best(img1, img2 ,crop)
-    print(f'time:{(time.time() - s)*1000}ms')
-    print(result)
-    print(result['rect'])
-    print(result['confidence'])
+    log.logger.info(f'time:{(time.time() - s)*1000}ms')
+    log.logger.info(result)
+    log.logger.info(result['rect'])
+    log.logger.info(result['confidence'])
     cv2.rectangle(img2, result['rect'], (0, 255, 0), 2)
 
     cv2.imwrite("result.jpg", img2)
@@ -623,7 +624,7 @@ if __name__ == '__main__':
 # matches = flann.knnMatch(des1, des2, k=2)
 #
 # results = find_template_result(img1, img2, kp1, kp2, matches,threshold = 0.5)
-# print(results)
+# log.logger.info(results)
 # # cv2.rectangle(img2, results[0]['rect'], (255, 255, 0), 2)
 # # cv2.imshow("sift-flannmatches", img2)
 # # cv2.waitKey(0)

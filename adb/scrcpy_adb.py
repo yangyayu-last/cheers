@@ -4,6 +4,7 @@ import scrcpy
 import cv2 as cv
 import time
 
+from logger import log
 from utils import room_calutil
 from utils.cvmatch import image_match_util
 from utils.dnf_config import DnfConfig
@@ -22,7 +23,7 @@ class ScrcpyADB:
         client = scrcpy.Client(device=devices[0], max_width=max_width,max_fps=15,bitrate = 8000000)
         # You can also pass an ADBClient instance to it
         adb.connect(self.global_cfg.get_by_key('device'))
-        print(devices, client)
+        log.logger.info(f"Devices: {devices}, Client: {client}")
         # 缩放比例
         self.zoom_ratio = 1 if max_width == 0 else max_width / real_width
         room_calutil.zoom_ratio = self.zoom_ratio
@@ -44,7 +45,7 @@ class ScrcpyADB:
 
             s = time.time()
             result = self.yolo(screen)
-            # print(f'匹配耗时{int((time.time() - s) * 1000)} ms')
+            # log.logger.info(f'匹配耗时{int((time.time() - s) * 1000)} ms')
             self.draw_image(screen, result)
             self.result = result
             self.draw_screem = screen
@@ -136,12 +137,12 @@ class ScrcpyADB:
             new_x = start_x - (i + 1) * step_size_x
             new_y = start_y - (i + 1) * step_size_y
             self.touch_move(int(new_x), int(new_y))
-            # print(f"移动到坐标：x={start_x},y={new_y}")
+            # log.logger.info(f"移动到坐标：x={start_x},y={new_y}")
             time.sleep(step_duration)
 
         # Send ACTION_UP event at the end point
         self.touch_end(end_x, end_y)
-        # print(f"结束坐标：x={start_x},y={end_y}")
+        # log.logger.info(f"结束坐标：x={start_x},y={end_y}")
 
 
 if __name__ == '__main__':
@@ -162,7 +163,7 @@ if __name__ == '__main__':
     #     crop = (1100, 70, 180, 60)
     #     result = image_match_util.match_template_best(template_img, sadb.last_screen,crop)
     #     while result is None:
-    #         print('找再次挑战按钮')
+    #         log.logger.info('找再次挑战按钮')
     #         time.sleep(0.5)
     #         frame = sadb.last_screen
     #         result = image_match_util.match_template_best(template_img, frame,crop)

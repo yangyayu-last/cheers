@@ -1,7 +1,7 @@
 import os
 
 import yaml
-
+from logger import log
 
 def get_by_key(yaml_obj, *key):
     try:
@@ -25,4 +25,4 @@ class DnfConfig:
 
 # cfg = DnfConfig()
 # ttt = cfg.get_by_key('coordinates','attack')
-# print(ttt)
+# log.logger.info(ttt)

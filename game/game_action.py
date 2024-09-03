@@ -164,7 +164,7 @@ class GameAction:
                 continue
             start_time = time.time()
             result = self.yolo(screen)
-            print(f'匹配地图点耗时：{(time.time() - start_time) * 1000}ms...')
+            log.logger.info(f'匹配地图点耗时：{(time.time() - start_time) * 1000}ms...')
             self.display_image(screen, result)
             route_map = self.find_one_tag(result, 'map')
             if route_map is not None:
@@ -173,7 +173,7 @@ class GameAction:
                 fail_cnt += 1
                 time.sleep(0.05)
                 if fail_cnt > 8:
-                    print('*******************************地图识别失败*******************************')
+                    log.logger.info('*******************************地图识别失败*******************************')
                     return None, None, None
 
         if route_map is not None:
@@ -208,14 +208,14 @@ class GameAction:
             # 2 判断是否过图成功
             ada_image = cv.adaptiveThreshold(cv.cvtColor(self.ctrl.adb.last_screen, cv.COLOR_BGR2GRAY), 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, 13, 3)
             if np.sum(ada_image) <= 600000:
-                print('*******************************过图成功*******************************')
+                log.logger.info('*******************************过图成功*******************************')
                 self.param.mov_start = False
                 self.param.cur_room = self.param.next_room
                 self.adb.touch_end(0, 0)
                 return result
             # 如果有怪物和装备，就停止过图
             if len(self.find_tag(result, ['Monster_szt', 'Monster_ds', 'Monster', 'equipment'])) > 0:
-                print('有怪物或装备，停止过图')
+                log.logger.info('有怪物或装备，停止过图')
                 self.param.mov_start = False
                 self.adb.touch_end(0, 0)
                 return result
@@ -228,12 +228,12 @@ class GameAction:
                 if flag is False:
                     route_id, cur_room, point = self.get_cur_room_index()
                 if cur_room is None:
-                    print('没有找到地图和当前房间')
+                    log.logger.info('没有找到地图和当前房间')
                     return result
                 _, next_room = room_calutil.get_next_room(cur_room, self.param.is_succ_sztroom)
 
                 if next_room is None:
-                    print('没有找到下一个房间')
+                    log.logger.info('没有找到下一个房间')
                     return result
                 self.param.cur_room = cur_room
                 self.param.next_room = next_room
@@ -249,13 +249,13 @@ class GameAction:
                 mx, my = self.ctrl.calc_move_point_direction(direction)
                 self.move_to_xy(mx, my)
 
-            print(f'当前所在房间id：{self.param.cur_room},移动方向：{direction}，当前是否移动：{self.param.mov_start}')
+            log.logger.info(f'当前所在房间id：{self.param.cur_room},移动方向：{direction}，当前是否移动：{self.param.mov_start}')
 
             # 3 先找到英雄位置，在找到对应方向的门进入
             hero = self.find_one_tag(result, 'hero')
             if hero is None:
                 hero_no += 1
-                print(f'没有找到英雄,{hero_no}次。')
+                log.logger.info(f'没有找到英雄,{hero_no}次。')
                 # mov_start = False
                 # self.adb.touch_end(0, 0)
                 if hero_no > 8:
@@ -267,7 +267,7 @@ class GameAction:
             diff = abs(hx-lax)+abs(hy-lay)
             # 如果数据没什么变化，说明卡墙了
             lax, lay = hx, hy
-            print(f'正在过图：英雄位置：{hx},{hy}，与上次的位置变化值：{diff}...')
+            log.logger.info(f'正在过图：英雄位置：{hx},{hy}，与上次的位置变化值：{diff}...')
 
             # 4 按照对应方向找对应的门
             doortag = room_calutil.get_tag_by_direction(direction)
@@ -280,23 +280,23 @@ class GameAction:
                     first_find_door_time = time.time()
                 # 看到门4秒没有过去，说明卡了随机移动
                 if time.time() - first_find_door_time > 4:
-                    print(f'*******************************看到门4秒没有过去，说明卡了,随机移动*******************************')
+                    log.logger.info(f'*******************************看到门4秒没有过去，说明卡了,随机移动*******************************')
                     self.no_hero_handle(result, mov_time=1)
                     first_find_door_time = time.time()
                     continue
                 self.move_to_target(door,hero, hx, hy, screen)
                 time.sleep(0.1)
-                print(f'发现门，往门的方向走。。。。{doortag},移动时间...')
+                log.logger.info(f'发现门，往门的方向走。。。。{doortag},移动时间...')
                 continue
             else:
-                print('没有找到方向门，继续找')
+                log.logger.info('没有找到方向门，继续找')
 
             time.sleep(0.1)
             move_door_cnt += 1
             max_cnt = 30
             if move_door_cnt > max_cnt:
                 move_door_cnt = 0
-                print(f'***************过门次数超过{max_cnt}次，随机移动一下*******************************')
+                log.logger.info(f'***************过门次数超过{max_cnt}次，随机移动一下*******************************')
                 self.no_hero_handle(result,mov_time=1)
 
 
@@ -336,7 +336,7 @@ class GameAction:
                 angle = (self.param.next_angle % 4) * 90 + random.randrange(start=-15, stop=15)
         else:
             angle = (self.param.next_angle % 4) * 90 + random.randrange(start=-15, stop=15)
-        print(f'正在随机移动。。。随机角度移动{angle}度。')
+        log.logger.info(f'正在随机移动。。。随机角度移动{angle}度。')
         self.param.next_angle = (self.param.next_angle + 1) % 4
         sx, sy = self.ctrl.calc_mov_point(angle)
         self.param.mov_start = False
@@ -364,7 +364,7 @@ class GameAction:
             time.sleep(0.01)
 
         else:
-            # print(f'~~~~~正在移动到{x},{y}...')
+            # log.logger.info(f'~~~~~正在移动到{x},{y}...')
             self.adb.touch_move(x, y)
 
 
@@ -376,7 +376,7 @@ class GameAction:
         ada_image = cv.adaptiveThreshold(cv.cvtColor(self.ctrl.adb.last_screen, cv.COLOR_BGR2GRAY), 255,
                                          cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, 13, 3)
         if np.sum(ada_image) <= 600000:
-            print('*******************************捡装备不小心过图了*******************************')
+            log.logger.info('*******************************捡装备不小心过图了*******************************')
             self.param.mov_start = False
             self.adb.touch_end(0, 0)
             while np.sum(cv.adaptiveThreshold(cv.cvtColor(self.ctrl.adb.last_screen, cv.COLOR_BGR2GRAY), 255,
@@ -412,7 +412,7 @@ class GameAction:
             hero = self.find_tag(result, 'hero')
             if len(hero) == 0:
                 hero_no += 1
-                print(f'没有找到英雄,{hero_no}次。')
+                log.logger.info(f'没有找到英雄,{hero_no}次。')
                 if hero_no > 5:
                     time.sleep(0.2)
                     hero_no = 0
@@ -421,7 +421,7 @@ class GameAction:
 
             monster = self.find_tag(result, ['Monster', 'Monster_ds', 'Monster_szt','card'])
             if len(monster) > 0:
-                print('找到怪物，或者发现卡片，停止捡装备。。')
+                log.logger.info('找到怪物，或者发现卡片，停止捡装备。。')
                 return result
 
             hero = hero[0]
@@ -429,10 +429,10 @@ class GameAction:
 
             equipment = self.find_tag(result, 'equipment')
             if len(equipment) > 0:
-                print('找到装备数量：', len(equipment))
+                log.logger.info(f'找到装备数量：{len(equipment)}')
                 self.move_to_target(equipment, hero, hx, hy, screen)
                 if time.time() - start_pick > 3:
-                    print('捡装备，超过3秒，随机移动。。。')
+                    log.logger.info('捡装备，超过3秒，随机移动。。。')
                     self.no_hero_handle(mov_time=1)
                     start_pick = time.time()
 
@@ -440,12 +440,12 @@ class GameAction:
                 # 没有装备就跳出去
                 check_cnt += 1
                 if check_cnt >= 5:
-                    print(f'没有装备，停止移动。当前移动状态：{self.param.mov_start}')
+                    log.logger.info(f'没有装备，停止移动。当前移动状态：{self.param.mov_start}')
                     if self.param.mov_start:
                         self.param.mov_start = False
                         self.adb.touch_end(0, 0)
                     return result
-                print(f'没有找到装备:{check_cnt} 次。。。')
+                log.logger.info(f'没有找到装备:{check_cnt} 次。。。')
                 continue
 
 
@@ -457,7 +457,7 @@ class GameAction:
         self.param.mov_start = False
         attak_cnt = 0
         check_cnt = 0
-        print(f'开始攻击怪物,当前房间：{self.param.cur_route_id}')
+        log.logger.info(f'开始攻击怪物,当前房间：{self.param.cur_route_id}')
         mov_to_master_start = time.time()
         attack_distance = self.global_cfg.get_by_key('attack_distance')
         attack_distance = attack_distance if attack_distance is None else 600
@@ -467,12 +467,12 @@ class GameAction:
             screen, result = self.find_result()
             card = self.find_tag(result, ['card','go','opendoor_l','opendoor_r','opendoor_u','op'])
             if len(card) > 0:
-                print('找到翻牌的卡片，不攻击')
+                log.logger.info('找到翻牌的卡片，不攻击')
                 return
 
             hero = self.find_tag(result, 'hero')
             if len(hero) == 0:
-                print(f'没有找到英雄,随机移动攻击')
+                log.logger.info(f'没有找到英雄,随机移动攻击')
                 self.no_hero_handle(result)
                 continue
 
@@ -488,11 +488,11 @@ class GameAction:
             monster = self.find_tag(result, ['Monster', 'Monster_ds', 'Monster_szt'])
             if len(monster) > 0:
                 check_cnt=0
-                print('怪物数量：', len(monster))
+                log.logger.info(f'怪物数量：{len(monster)}')
                 if room_skill_flag:
                     room_skill_flag = False
                     # 先来一套固定技能，然后在随机打
-                    print(f'开始释放房间{self.param.cur_room}的固定技能。。。')
+                    log.logger.info(f'开始释放房间{self.param.cur_room}的固定技能。。。')
                     self.attack.room_skill(self.param.cur_room)
 
                 # 最近距离的怪物坐标
@@ -501,13 +501,13 @@ class GameAction:
                 ax, ay = get_detect_obj_bottom(nearest_monster)
                 # 判断在一条直线上再攻击
                 y_dis = abs(ay - hy)
-                print(f'最近距离的怪物坐标：{ax},{ay},距离：{distance},y距离：{y_dis}')
+                log.logger.info(f'最近距离的怪物坐标：{ax},{ay},距离：{distance},y距离：{y_dis}')
                 ratio = room_calutil.zoom_ratio
                 if self.param.cur_room == (1,1) and attak_cnt == 0:
                     attak_cnt += 1
                     # 狮子头房间放觉醒
                     self.attack.unique_skill()
-                    print('狮子头房间放觉醒完成释放')
+                    log.logger.info('狮子头房间放觉醒完成释放')
                     continue
 
                 if distance <= attack_distance * ratio and y_dis <= 100*ratio:
@@ -518,7 +518,7 @@ class GameAction:
                     self.move_to_xy(sx, sy)
                     time.sleep(0.2)
                     # self.ctrl.move(angle, 0.3)
-                    print(f'====================敌人与我的角度{angle}==攻击怪物，攻击次数：{attak_cnt}，当前房间,{self.param.cur_room}')
+                    log.logger.info(f'====================敌人与我的角度{angle}==攻击怪物，攻击次数：{attak_cnt}，当前房间,{self.param.cur_room}')
                     attak_cnt += 1
                     # 释放连招，懒得细分不同类型技能了，一股脑放吧
                     self.attack.buff_skill()
@@ -546,7 +546,7 @@ class GameAction:
                 time.sleep(0.1)
                 check_cnt += 1
                 if check_cnt >= 5:
-                    print(f'没有找到怪物:{check_cnt}次。。。')
+                    log.logger.info(f'没有找到怪物:{check_cnt}次。。。')
                     return
 
 
@@ -579,7 +579,7 @@ class GameAction:
         """
         reslist = [x for x in result if self.yolo.class_names[int(x.label)] == tag]
         if len(reslist) == 0:
-            print(f'没有找到标签{tag}')
+            log.logger.info(f'没有找到标签{tag}')
             return None
         else:
             return reslist[0]
@@ -610,7 +610,7 @@ class GameAction:
                 self.ctrl.click(1889, 917)
                 return
             if len(card) > 0:
-                print('打完了，去翻牌子')
+                log.logger.info('打完了，去翻牌子')
                 # 第一块牌子的坐标（上）：727，400第二块（上）：1164,400，第三块（上）：1596,400，第四块（上）：2047,400
                 card_xy = [(727, 400), (1164, 400), (1596, 400), (2047, 400)]
                 # 加入随机坐标和随机偏移
@@ -628,10 +628,11 @@ class GameAction:
                 return
 
     def again(self):
-        print(f'当前房间号{self.param.cur_room}')
+        log.logger.info(f'当前房间号{self.param.cur_room}')
         try:
             # 截取区域 xywh
-            crop = (2141, 110, 500, 110)
+            # crop = (2141, 110, 500, 110)
+            crop = (1896, 121, 258, 65)
             crop = tuple(int(value * room_calutil.zoom_ratio) for value in crop)
             # 模版匹配再次挑战按钮
             result = image_match_util.match_template_best(self.again_button_img, self.ctrl.adb.last_screen, crop)
@@ -649,7 +650,7 @@ class GameAction:
             crop = tuple(int(value * room_calutil.zoom_ratio) for value in crop)
             repair_res = image_match_util.match_template_best(self.repair_equipment, self.ctrl.adb.last_screen, crop)
             if repair_res is not None:
-                print('发现修理装备按钮,点击修理装备')
+                log.logger.info('发现修理装备按钮,点击修理装备')
                 x, y, w, h = repair_res['rect']
                 self.ctrl.click((x + w / 2) / self.ctrl.adb.zoom_ratio, (y + h / 2) / self.ctrl.adb.zoom_ratio)
                 time.sleep(0.8)
@@ -660,7 +661,8 @@ class GameAction:
                 time.sleep(0.2)
 
             # 截取区域 xywh
-            crop = (2141, 110, 500, 110)
+            # crop = (2141, 110, 500, 110)
+            crop = (1896, 121, 258, 65)
             crop = tuple(int(value * room_calutil.zoom_ratio) for value in crop)
             # 模版匹配再次挑战按钮
             result = image_match_util.match_template_best(self.again_button_img, self.ctrl.adb.last_screen, crop)
@@ -668,10 +670,10 @@ class GameAction:
                 return
 
             # 发现了再次挑战，就重开
-            print('发现再次挑战按钮,点击重开')
+            log.logger.info('发现再次挑战按钮,点击重开')
             x, y, w, h = result['rect']
             self.ctrl.click((x + w / 2) / self.ctrl.adb.zoom_ratio, (y + h / 2) / self.ctrl.adb.zoom_ratio)
-            print('成功点击再次挑战按钮')
+            log.logger.info('成功点击再次挑战按钮')
             time.sleep(2)
             # self.ctrl.click(1304, 691)
             self.ctrl.click(1306, 689)
@@ -679,9 +681,9 @@ class GameAction:
             self.param = GameParamVO()
 
         except Exception as e:
-            print('没有找到再次挑战按钮:', e)
+            log.logger.info('没有找到再次挑战按钮:', e)
     def test(self):
-        print(f'开始释放房间{self.param.cur_room}的固定技能。。。')
+        log.logger.info(f'开始释放房间{self.param.cur_room}的固定技能。。。')
         self.attack.room_skill(self.param.cur_room)
 
 
@@ -695,26 +697,26 @@ def run():
             # log.logger.info('测试')
             # 根据出现的元素分配动作
             if len(action.find_tag(action.find_result()[1], 'equipment'))>0:
-                print('--------------------------------发现装备，开始捡起装备--------------------------------')
+                log.logger.info('--------------------------------发现装备，开始捡起装备--------------------------------')
                 action.pick_up_equipment()
             if len(action.find_tag(action.find_result()[1], ['go', 'go_d', 'go_r', 'go_u','opendoor_d', 'opendoor_r', 'opendoor_u', 'opendoor_l'])) > 0:
-                print('--------------------------------发现门，开始移动到下一个房间--------------------------------')
+                log.logger.info('--------------------------------发现门，开始移动到下一个房间--------------------------------')
                 action.move_to_next_room()
             if len(action.find_tag(action.find_result()[1], ['Monster', 'Monster_ds', 'Monster_szt'])) > 0:
-                print('--------------------------------发现怪物，开始攻击--------------------------------')
+                log.logger.info('--------------------------------发现怪物，开始攻击--------------------------------')
                 action.attack_master()
             if len(action.find_tag(action.find_result()[1], ['select', 'start', 'card']))>0:
-                print('--------------------------------发现选择框或牌子卡片，开始选择--------------------------------')
+                log.logger.info('--------------------------------发现选择框或牌子卡片，开始选择--------------------------------')
                 action.reset_start_game()
             action.again()
         except Exception as e:
             action.param.mov_start = False
-            print(f'出现异常:{e}')
+            log.logger.info(f'出现异常:{e}')
             traceback.print_exc()
 
-    print('程序结束...')
+    log.logger.info('程序结束...')
     while True:
-        print('全部完成，展示帧画面...')
+        log.logger.info('全部完成，展示帧画面...')
         screen, result = action.find_result()
         time.sleep(0.1)
 
@@ -726,19 +728,19 @@ def test():
     while True:
         try:
             action.find_result()
-            print('--------------------------------test start--------------------------------')
+            log.logger.info('--------------------------------test start--------------------------------')
             cv.imwrite('../test.jpg', action.adb.last_screen)
             res = room_calutil.find_cur_room(action.adb.last_screen)
             action.param.cur_room = res[1]
             action.test()
 
-            print(res)
+            log.logger.info(res)
             time.sleep(1)
-            print('--------------------------------test end--------------------------------')
+            log.logger.info('--------------------------------test end--------------------------------')
 
         except Exception as e:
             action.param.mov_start = False
-            print(f'出现异常:{e}')
+            log.logger.info(f'出现异常:{e}')
             traceback.print_exc()
 
 

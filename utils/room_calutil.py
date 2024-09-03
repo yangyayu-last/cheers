@@ -3,6 +3,7 @@ import os
 import typing
 
 import cv2
+from logger import log
 from ncnn.utils.objects import Rect
 from torch import Size
 from typing import Tuple
@@ -23,7 +24,7 @@ room_route = [
     (1, 4),
     (1, 5)
 ]
-print(f"布万加刷图的路线图:{room_route}")
+log.logger.info(f"布万加刷图的路线图:{room_route}")
 all_room = [
     (1, 0),
     (2, 0),
@@ -55,7 +56,7 @@ def rect_slice_index(rect: Rect, size: Size, point: tuple) -> Tuple[int, int]:
     rects = [
         [(x1 + i * width, y1 + j * height, x1 + (i + 1) * width, y1 + (j + 1) * height) for i in range(size[0])] for
         j in range(size[1])]
-    # print(f"所有方块对应的坐标范围:{rects}")
+    # log.logger.info(f"所有方块对应的坐标范围:{rects}")
     for i, row in enumerate(rects):
         for j, rect in enumerate(row):
             x1, y1, x2, y2 = rect
@@ -81,7 +82,7 @@ def get_cur_room_index(point):
         if xy == room_route[ind]:
             cur_ind = ind
             break
-    print(f"当前房间索引:{cur_ind},房间行列号：{xy}")
+    log.logger.info(f"当前房间索引:{cur_ind},房间行列号：{xy}")
     return cur_ind,xy
 
 
@@ -93,7 +94,7 @@ def get_recent_room(cur_room):
     for ind,room in enumerate(room_route):
         if next_room_1 == room or next_room_2 == room or next_room_3 == room or next_room_4 == room:
             return room
-    print("从预设的路线中，没有找到下一个房间")
+    log.logger.info("从预设的路线中，没有找到下一个房间")
     for ind,room in enumerate(all_room):
         if next_room_1 == room or next_room_2 == room or next_room_3 == room or next_room_4 == room:
             return room
@@ -110,7 +111,7 @@ def get_next_room(cur_room, is_succ_sztroom: bool = False):
         ind = 6
 
     if ind is None:
-        print("从预设的路线中，没有找到下一个房间")
+        log.logger.info("从预设的路线中，没有找到下一个房间")
         # 错误房间就三个，分别枚举算了
         if cur_room == (0, 0):
             return None, (1,0)
@@ -182,7 +183,7 @@ def load_map_template(map_name='bwj_room'):
         _cfgs = map_template.cfgs
     except Exception as e:
         # 处理可能出现的异常
-        print(f"加载{map_name}地图模板时发生错误: {e}")
+        log.logger.info(f"加载{map_name}地图模板时发生错误: {e}")
 
 
 def find_cur_room(screen, confi=0.7):
@@ -210,14 +211,14 @@ def find_cur_room(screen, confi=0.7):
                     confidence = res['confidence']
                     room = tuple(cfg['name'])
                     flag = True
-    print(f'匹配房间结果：{flag},房间行列号:{room}')
+    log.logger.info(f'匹配房间结果：{flag},房间行列号:{room}')
     return flag, room
 
 if __name__ == '__main__':
     t = rect_slice_index(Rect(100, 100, 100, 100), Size((10, 6)), (101.54, 145.864))
-    print(get_next_room((1, 1), False))
-    print(t)
-    print(t == (4, 0))
-    print(get_cur_room_index((101.54, 145.864)))
-    print(get_run_direction((0, 1), (0, 2)))
-    print(get_run_direction((0, 2), (1, 2)))
+    log.logger.info(get_next_room((1, 1), False))
+    log.logger.info(t)
+    log.logger.info(t == (4, 0))
+    log.logger.info(get_cur_room_index((101.54, 145.864)))
+    log.logger.info(get_run_direction((0, 1), (0, 2)))
+    log.logger.info(get_run_direction((0, 2), (1, 2)))

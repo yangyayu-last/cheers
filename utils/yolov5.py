@@ -294,7 +294,7 @@ class YoloV5s:
                     if redundant:
                         i = i[iou.sum(1) > 1]  # require redundancy
                 except:  # possible CUDA error https://github.com/ultralytics/yolov3/issues/1139
-                    # print(x, i, x.shape, i.shape)
+                    # log.logger.info(x, i, x.shape, i.shape)
                     pass
 
             output[xi] = x[i]

@@ -2,6 +2,7 @@ import random
 import time
 from typing import Tuple
 
+from logger import log
 from adb.scrcpy_adb import ScrcpyADB
 import math
 

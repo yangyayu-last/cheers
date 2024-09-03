@@ -10,6 +10,8 @@ from PySide6.QtCore import *
 from PySide6.QtWidgets import QApplication, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, \
     QCheckBox, QLabel, QGridLayout, QSpacerItem, QSizePolicy
 from numpy import ndarray
+from logger import log
+
 from scrcpy import ACTION_DOWN
 
 # 创建QApplication对象
@@ -349,7 +351,7 @@ class MyWindow(QWidget):
         if code in hard_code:
             return hard_code[code]
 
-        print(f"Unknown keycode: {code}")
+        log.logger.info(f"Unknown keycode: {code}")
         return -1
 
     def closeEvent(self, _):
@@ -370,14 +372,14 @@ def main():
 
     if widget.now_client and widget.now_client.resolution:
         width, height = widget.now_client.resolution
-        print(f"Device resolution: {width}x{height}")
+        log.logger.info(f"Device resolution: {width}x{height}")
 
         start_x = width // 2
         start_y = height * 3 // 4
         end_x = width // 2
         end_y = height // 4
 
-        print("Starting swipe...")
+        log.logger.info("Starting swipe...")
         widget.swipe_page(start_x, start_y, end_x, end_y, duration=1, steps=20)
 
         # widget.mouse_exe(start_x, start_y, scrcpy.ACTION_DOWN)
@@ -386,9 +388,9 @@ def main():
         # time.sleep(0.1)
         # widget.mouse_exe(end_x, end_y, scrcpy.ACTION_UP)
 
-        print("Swipe completed")
+        log.logger.info("Swipe completed")
     else:
-        print("Failed to get device resolution or client not ready")
+        log.logger.info("Failed to get device resolution or client not ready")
 
     sys.exit(app.exec())
 
