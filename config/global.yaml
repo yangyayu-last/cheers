@@ -11,7 +11,7 @@
 
 
 #是否在pc展示手机画面
-scrcpy_show_window: False
+scrcpy_show_window: false
 
 # 链接的设备名或ip端口
 #device: adb-24ed1083-yGX7n1._adb-tls-connect._tcp.
@@ -19,6 +19,7 @@ device: 24ed1083
 
 # 当前的角色
 cur_role: axiulou
+#cur_role: naima
 attack_distance: 600 # 攻击距离一般600够了
 
 # 支持的所有角色，配置对应的配置文件路径
@@ -35,6 +36,9 @@ role_config:
   # 大枪
   - role_name: daqiang
     path: daqiang.yaml
+  # 奶妈
+  - role_name: naima
+    path: naima.yaml
 
 
 # 技能与方向坐标点配置

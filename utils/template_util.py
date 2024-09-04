@@ -43,7 +43,8 @@ class TemplateUtil:
             crop = self.cfgs['rect']
             img_name = self.cfgs['img_name']
             img = self.img_map[img_name]
-            res = image_match_util.cvmatch_template_best(img, screen, crop)
+            room = tuple(self.cfgs['name'])
+            res = image_match_util.cvmatch_template_best(img, screen,room, crop)
             if res is not None:
                 # 取可信度最高的匹配结果
                 if res['confidence'] > confi:

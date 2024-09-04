@@ -222,11 +222,12 @@ class GameAction:
 
             # 1 先确定要行走的方向
             if direction is None:
-                # route_id, cur_room, point = self.get_cur_room_index()
                 flag, cur_room = room_calutil.find_cur_room(self.adb.last_screen)
-                self.param.cur_room = cur_room
                 if flag is False:
                     route_id, cur_room, point = self.get_cur_room_index()
+                #不在根据小地图特诊确定，直接使用大图（大地图模型识别有误差）
+                # route_id, cur_room, point = self.get_cur_room_index()
+                self.param.cur_room = cur_room
                 if cur_room is None:
                     log.logger.info('没有找到地图和当前房间')
                     return result
@@ -243,7 +244,6 @@ class GameAction:
                 mx, my = self.ctrl.calc_move_point_direction(direction)
                 self.move_to_xy(mx, my)
                 screen, result = self.find_result()
-
             else:
                 # 按方向走起来
                 mx, my = self.ctrl.calc_move_point_direction(direction)
@@ -529,8 +529,10 @@ class GameAction:
                 # ax, ay = get_detect_obj_center(nearest_monster)
                 # 怪物在右边,就走到怪物走边400的距离
                 if ax > hx:
+                    log.logger.info('怪物在右边,移动到怪物左边《《《《《《《《《《《《《《《《《《《')
                     ax = int(ax - (attack_distance-100) * ratio)
                 else:
+                    log.logger.info('怪物在左边,移动到怪物右边》》》》》》》》》》》》》》》》》》》')
                     ax = int(ax + (attack_distance-100) * ratio)
                 self.craw_line(hx, hy, ax, ay, screen)
                 angle = calc_angle(hx, hy, ax, ay)
@@ -696,19 +698,21 @@ def run():
         try:
             # log.logger.info('测试')
             # 根据出现的元素分配动作
-            if len(action.find_tag(action.find_result()[1], 'equipment'))>0:
-                log.logger.info('--------------------------------发现装备，开始捡起装备--------------------------------')
-                action.pick_up_equipment()
-            if len(action.find_tag(action.find_result()[1], ['go', 'go_d', 'go_r', 'go_u','opendoor_d', 'opendoor_r', 'opendoor_u', 'opendoor_l'])) > 0:
-                log.logger.info('--------------------------------发现门，开始移动到下一个房间--------------------------------')
-                action.move_to_next_room()
-            if len(action.find_tag(action.find_result()[1], ['Monster', 'Monster_ds', 'Monster_szt'])) > 0:
+            result_ = action.find_result()[1]
+            if len(action.find_tag(result_, ['Monster', 'Monster_ds', 'Monster_szt'])) > 0:
                 log.logger.info('--------------------------------发现怪物，开始攻击--------------------------------')
                 action.attack_master()
-            if len(action.find_tag(action.find_result()[1], ['select', 'start', 'card']))>0:
+                continue
+            elif len(action.find_tag(result_, 'equipment'))>0:
+                log.logger.info('--------------------------------发现装备，开始捡起装备--------------------------------')
+                action.pick_up_equipment()
+            elif len(action.find_tag(result_, ['go', 'go_d', 'go_r', 'go_u', 'opendoor_d', 'opendoor_r', 'opendoor_u', 'opendoor_l'])) > 0:
+                log.logger.info('--------------------------------发现门，开始移动到下一个房间--------------------------------')
+                action.move_to_next_room()
+            elif len(action.find_tag(result_, ['select', 'start', 'card']))>0:
                 log.logger.info('--------------------------------发现选择框或牌子卡片，开始选择--------------------------------')
                 action.reset_start_game()
-            action.again()
+            # action.again()
         except Exception as e:
             action.param.mov_start = False
             log.logger.info(f'出现异常:{e}')

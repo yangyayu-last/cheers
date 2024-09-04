@@ -194,7 +194,7 @@ def find_cur_room(screen, confi=0.7):
     :return: flag 是否匹配成功, room
     """
     flag = False
-    room = None
+    most_similar_room = None
     if _img_map is None or _cfgs is None:
         load_map_template()
     if isinstance(_cfgs, list):
@@ -204,15 +204,16 @@ def find_cur_room(screen, confi=0.7):
             crop = cfg['rect']
             img_name = cfg['img_name']
             img = _img_map[img_name]
-            res = image_match_util.cvmatch_template_best(img, screen, crop)
+            current_room = tuple(cfg['name'])
+            res = image_match_util.cvmatch_template_best(img, screen,current_room, crop,)
             if res is not None:
                 # 取可信度最高的匹配结果
                 if res['confidence'] > confidence:
                     confidence = res['confidence']
-                    room = tuple(cfg['name'])
                     flag = True
-    log.logger.info(f'匹配房间结果：{flag},房间行列号:{room}')
-    return flag, room
+                    most_similar_room = current_room
+    log.logger.info(f'匹配房间结果：{flag},房间行列号:{most_similar_room}')
+    return flag, most_similar_room
 
 if __name__ == '__main__':
     t = rect_slice_index(Rect(100, 100, 100, 100), Size((10, 6)), (101.54, 145.864))

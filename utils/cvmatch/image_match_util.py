@@ -1,5 +1,6 @@
 # sift FLANN matcher
 import time
+from typing import Tuple
 
 from logger import log
 import numpy as np
@@ -548,7 +549,7 @@ def match_template_best(im_search, im_source, *crop, resize_rate=1):
         return None
 
 
-def cvmatch_template_best(im_search, im_source, *crop):
+def cvmatch_template_best(im_search, im_source,room, *crop):
     """
         使用cv模版匹配算法进行模板匹配，并且取出匹配度最高的那一个
         :param im_search: 模版图
@@ -562,8 +563,16 @@ def cvmatch_template_best(im_search, im_source, *crop):
         x, y, w, h = 0, 0, im_source.shape[1], im_source.shape[0]
         if len(crop) > 0:
             x, y, w, h = crop[0]
+        #等比例计算真机在投屏上的坐标点
+        # x, y = convert_resolution(x, y)
+
+        #保存图片
+        cv2.imwrite("im_source.png",im_source)
+
         # 截剪im_source
         im_source = im_source[y:y + h, x:x + w]
+        # 保存裁剪后的图片
+        cv2.imwrite(f'im_source{x}-{y}-{room}.png', im_source)
 
         if im_source.shape[0] < m_h or im_source.shape[1] < m_w:
             log.logger.info('模板大小大于原图')
@@ -583,6 +592,20 @@ def cvmatch_template_best(im_search, im_source, *crop):
     except Exception as e:
         log.logger.info(f'cvmatch_template_best error:{e}')
         return None
+
+
+def convert_resolution(x: int, y: int, old_width: int = 2340, old_height: int = 1080, new_width: int = 1384,
+                       new_height: int = 640) -> Tuple[int, int]:
+    # 计算比例因子
+    x_scale = new_width / old_width
+    y_scale = new_height / old_height
+
+    # 转换坐标
+    new_x = int(x * x_scale)
+    new_y = int(y * y_scale)
+
+    return new_x, new_y
+
 
 if __name__ == '__main__':
     # 模版
