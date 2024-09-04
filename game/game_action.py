@@ -98,7 +98,8 @@ class GameAction:
         again_button_path = '../template/re_enter/again_button.jpg'
         image_path = os.path.join(script_dir, again_button_path)
 
-        repair_equipment_path = '../template/repair_equipment/repair_equipment.png'
+        # repair_equipment_path = '../template/repair_equipment/repair_equipment.png'
+        repair_equipment_path = '../template/repair_equipment/im_source_64-10-0.png'
         image_path2 = os.path.join(script_dir, repair_equipment_path)
 
         # 再次挑战
