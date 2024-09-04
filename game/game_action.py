@@ -638,17 +638,16 @@ class GameAction:
             crop = tuple(int(value * room_calutil.zoom_ratio) for value in crop)
             # 模版匹配再次挑战按钮
             result = image_match_util.match_template_best(self.again_button_img, self.ctrl.adb.last_screen, crop)
-            if result is None:
-                return
-            # 通过房间号来判断，但如果重新启动py程序的时候，就会导致参数被初始化为（1，0）。进而无法继续游戏
-            # if self.param.cur_room != (1, 5) and self.param.cur_room != (1, 4):
-            #     return
-            screen, result = self.find_result()
-            if len(self.find_tag(result, 'equipment')) > 0:
-                return
+            if result is not None:
+                # 通过房间号来判断，但如果重新启动py程序的时候，就会导致参数被初始化为（1，0）。进而无法继续游戏
+                # if self.param.cur_room != (1, 5) and self.param.cur_room != (1, 4):
+                #     return
+                screen, result = self.find_result()
+                if len(self.find_tag(result, 'equipment')) > 0:
+                    return
 
             # 发现修理装备，就修理
-            crop = (2148, 444, 450, 92)
+            crop = (122, 55, 95, 80)
             crop = tuple(int(value * room_calutil.zoom_ratio) for value in crop)
             repair_res = image_match_util.match_template_best(self.repair_equipment, self.ctrl.adb.last_screen, crop)
             if repair_res is not None:
@@ -657,7 +656,7 @@ class GameAction:
                 self.ctrl.click((x + w / 2) / self.ctrl.adb.zoom_ratio, (y + h / 2) / self.ctrl.adb.zoom_ratio)
                 time.sleep(0.8)
                 # 点击修理
-                self.ctrl.click(1320, 1091)
+                self.ctrl.click(1111, 954)
                 time.sleep(0.8)
                 self.ctrl.click((x + w / 2) / self.ctrl.adb.zoom_ratio, (y + h / 2) / self.ctrl.adb.zoom_ratio)
                 time.sleep(0.2)
@@ -668,19 +667,17 @@ class GameAction:
             crop = tuple(int(value * room_calutil.zoom_ratio) for value in crop)
             # 模版匹配再次挑战按钮
             result = image_match_util.match_template_best(self.again_button_img, self.ctrl.adb.last_screen, crop)
-            if result is None:
-                return
-
-            # 发现了再次挑战，就重开
-            log.logger.info('发现再次挑战按钮,点击重开')
-            x, y, w, h = result['rect']
-            self.ctrl.click((x + w / 2) / self.ctrl.adb.zoom_ratio, (y + h / 2) / self.ctrl.adb.zoom_ratio)
-            log.logger.info('成功点击再次挑战按钮')
-            time.sleep(2)
-            # self.ctrl.click(1304, 691)
-            self.ctrl.click(1306, 689)
-            # 初始化参数
-            self.param = GameParamVO()
+            if result is not None:
+                # 发现了再次挑战，就重开
+                log.logger.info('发现再次挑战按钮,点击重开')
+                x, y, w, h = result['rect']
+                self.ctrl.click((x + w / 2) / self.ctrl.adb.zoom_ratio, (y + h / 2) / self.ctrl.adb.zoom_ratio)
+                log.logger.info('成功点击再次挑战按钮')
+                time.sleep(2)
+                # self.ctrl.click(1304, 691)
+                self.ctrl.click(1306, 689)
+                # 初始化参数
+                self.param = GameParamVO()
 
         except Exception as e:
             log.logger.info('没有找到再次挑战按钮:', e)
