@@ -6,7 +6,7 @@
   {"rect": [1240, 62, 32, 32], "name": [2,2], "img_name": "img4.png", "desc": "正在2行2列房间"},
   {"rect": [1240, 62, 44, 44], "name": [1,2], "img_name": "im_source1240-62-(1, 2)-0.png", "desc": "正在1行2列房间"},
   {"rect": [1203, 62, 63, 63], "name": [1,3], "img_name": "im_source1203-62-(1, 3)-0.png", "desc": "正在1行3列房间"},
-  {"rect": [1271, 66, 32, 32], "name": [1,4], "img_name": "im_source1271-66-(1, 4)-0.png", "desc": "正在1行4列房间"},
+  {"rect": [1273, 62, 32, 32], "name": [1,4], "img_name": "img7.png", "desc": "正在1行4列房间"},
   {"rect": [1240, 62, 32, 32], "name": [1,5], "img_name": "img8.png", "desc": "正在1行5列房间"},
   {"rect": [1240, 62, 32, 32], "name": [0,2], "img_name": "img9.png", "desc": "同理"},
   {"rect": [1203, 93, 32, 32], "name": [0,1], "img_name": "img10.png", "desc": "同理"},
