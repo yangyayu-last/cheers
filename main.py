@@ -6,4 +6,4 @@ if __name__ == '__main__':
     启动入口
     :author: Cheers。。
     """
-    action.run()
+    action.run1()

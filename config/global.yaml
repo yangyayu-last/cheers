@@ -49,8 +49,8 @@ role_config:
 
 # 技能与方向坐标点配置
 coordinates:
-  wheel_center: [394, 815] # 方向轮盘的中心点
-  wheel_radius: 125 # 方向轮盘的半径 比实际的半径要小一点
+  wheel_center: [398, 815] # 方向轮盘的中心点
+  wheel_radius: 100 # 方向轮盘的半径 比实际的半径要小一点
   attack: [2050, 920] # 攻击按钮的坐标
   skill_d: [1447, 963] # 底部左边两个技能 d f
   skill_f: [1618, 973]

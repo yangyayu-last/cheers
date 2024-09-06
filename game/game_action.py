@@ -3,6 +3,7 @@ import random
 import traceback
 from typing import Tuple
 
+from game.Gameloop import GameLoop
 from game.attack.attack_master import AttackMaster
 from logger import log
 from utils import room_calutil
@@ -124,7 +125,7 @@ class GameAction:
                 continue
             result = self.ctrl.adb.result
             self.cv_show(screen)
-            cv.waitKey(1)
+            # cv.waitKey(1)
             return screen, result
 
     def cv_show(self, screen):
@@ -713,49 +714,83 @@ class GameAction:
         log.logger.info(f'开始释放房间{self.param.cur_room}的固定技能。。。')
         self.attack.room_skill(self.param.cur_room)
 
-
+def run1():
+    ctrl = GameControl(ScrcpyADB(1384))  # 1384
+    action = GameAction(ctrl)
+    loop = GameLoop(action)
+    while True:
+        try:
+            time.sleep(0.01)
+            loop.update()
+        except Exception as e:
+            action.param.mov_start = False
+            log.logger.info(f'出现异常:{e}')
+            traceback.print_exc()
+log.logger.info('程序结束...')
 
 def run():
     ctrl = GameControl(ScrcpyADB(1384)) #1384
     action = GameAction(ctrl)
+    # 缓存上次的结果，避免重复处理
+    last_action = None
 
     while True:
-        # try:
-        #     # 根据出现的元素分配动作
-        #     result_ = action.find_result()[1]
-        #     if len(action.find_tag(result_, ['Monster', 'Monster_ds', 'Monster_szt'])) > 0:
-        #         log.logger.info('--------------------------------发现怪物，开始攻击--------------------------------')
-        #         action.attack_master()
-        #     elif len(action.find_tag(result_, 'equipment'))>0:
-        #         log.logger.info('--------------------------------发现装备，开始捡起装备--------------------------------')
-        #         action.pick_up_equipment()
-        #     elif len(action.find_tag(result_, ['go', 'go_d', 'go_r', 'go_u', 'opendoor_d', 'opendoor_r', 'opendoor_u', 'opendoor_l'])) > 0:
-        #         log.logger.info('--------------------------------发现门，开始移动到下一个房间--------------------------------')
-        #         action.move_to_next_room()
-        #     elif len(action.find_tag(result_, ['select', 'start', 'card']))>0:
-        #         log.logger.info('--------------------------------发现选择框或牌子卡片，开始选择--------------------------------')
-        #         action.reset_start_game()
-        #     action.again()
         try:
-            # log.logger.info('测试')
-            # 根据出现的元素分配动作
             start_time = time.time()  # 记录循环开始的时间
-            if len(action.find_tag(action.find_result()[1], 'equipment'))>0:
-                log.logger.info('--------------------------------发现装备，开始捡起装备--------------------------------')
-                action.pick_up_equipment()
-            if len(action.find_tag(action.find_result()[1], ['go', 'go_d', 'go_r', 'go_u','opendoor_d', 'opendoor_r', 'opendoor_u', 'opendoor_l'])) > 0:
-                log.logger.info('--------------------------------发现门，开始移动到下一个房间--------------------------------')
-                action.move_to_next_room()
-            if len(action.find_tag(action.find_result()[1], ['Monster', 'Monster_ds', 'Monster_szt'])) > 0:
-                log.logger.info('--------------------------------发现怪物，开始攻击--------------------------------')
-                action.attack_master()
-            if len(action.find_tag(action.find_result()[1], ['select', 'start', 'card']))>0:
-                log.logger.info('--------------------------------发现选择框或牌子卡片，开始选择--------------------------------')
-                action.reset_start_game()
+            result = action.find_result()[1]
+            # 根据出现的元素分配动作
+            if len(action.find_tag(result, 'equipment'))>0:
+                if last_action != 'pick_up_equipment':
+                    log.logger.info('--------------------------------发现装备，开始捡起装备--------------------------------')
+                    action.pick_up_equipment()
+                    last_action = 'pick_up_equipment'
+            # 优先级：如果有怪物，优先攻击
+            elif len(action.find_tag(result, ['Monster', 'Monster_ds', 'Monster_szt'])) > 0:
+                if last_action != 'attack_master':
+                    log.logger.info('--------------------------------发现怪物，开始攻击--------------------------------')
+                    action.attack_master()
+                    last_action = 'attack_master'
+            # 如果没有怪物，检查是否有门，进行移动
+            elif len(action.find_tag(result, ['go', 'go_d', 'go_r', 'go_u', 'opendoor_d', 'opendoor_r', 'opendoor_u', 'opendoor_l'])) > 0:
+                if last_action != 'move_to_next_room':
+                    log.logger.info('--------------------------------发现门，开始移动到下一个房间--------------------------------')
+                    action.move_to_next_room()
+                    last_action = 'move_to_next_room'
+            # 如果没有怪物或门，检查选择框或牌子
+            elif len(action.find_tag(result, ['select', 'start', 'card']))>0:
+                if last_action != 'reset_start_game':
+                    log.logger.info('--------------------------------发现选择框或牌子卡片，开始选择--------------------------------')
+                    action.reset_start_game()
+                    last_action = 'reset_start_game'
+            # 如果没有任何可以处理的对象，角色随机移动，避免停滞
+            else:
+                log.logger.info('--------------------------------没有发现目标，开始随机移动--------------------------------')
+                action.no_hero_handle(result)
+                last_action = None  # 重置为无操作
             # action.again()
             end_time = time.time()  # 记录循环结束的时间
             elapsed_time = end_time - start_time  # 计算本次循环花费的时间
             log.logger.info(f"一次循环花费时间: {elapsed_time:.4f} 秒")
+        # try:
+            # 根据出现的元素分配动作
+            # screen, result = action.find_result()[1]
+            # start_time = time.time()  # 记录循环开始的时间
+            # if len(action.find_tag(result, 'equipment'))>0:
+            #     log.logger.info('--------------------------------发现装备，开始捡起装备--------------------------------')
+            #     action.pick_up_equipment()
+            # if len(action.find_tag(result, ['go', 'go_d', 'go_r', 'go_u', 'opendoor_d', 'opendoor_r', 'opendoor_u', 'opendoor_l'])) > 0:
+            #     log.logger.info('--------------------------------发现门，开始移动到下一个房间--------------------------------')
+            #     action.move_to_next_room()
+            # if len(action.find_tag(result, ['Monster', 'Monster_ds', 'Monster_szt'])) > 0:
+            #     log.logger.info('--------------------------------发现怪物，开始攻击--------------------------------')
+            #     action.attack_master()
+            # if len(action.find_tag(result, ['select', 'start', 'card']))>0:
+            #     log.logger.info('--------------------------------发现选择框或牌子卡片，开始选择--------------------------------')
+            #     action.reset_start_game()
+            # # action.again()
+            # end_time = time.time()  # 记录循环结束的时间
+            # elapsed_time = end_time - start_time  # 计算本次循环花费的时间
+            # log.logger.info(f"一次循环花费时间: {elapsed_time:.4f} 秒")
         except Exception as e:
             action.param.mov_start = False
             log.logger.info(f'出现异常:{e}')

@@ -5,6 +5,7 @@ import cv2 as cv
 import time
 import adbutils
 
+from logger import log
 from utils import room_calutil
 from utils.cvmatch import image_match_util
 from utils.dnf_config import DnfConfig
@@ -51,22 +52,32 @@ class ScrcpyADB:
         client.add_listener(scrcpy.EVENT_FRAME, self.on_frame)
         client.start(threaded=True)
         self.client = client
+        self.processing_frame = False  # 用于标记是否正在处理帧
 
     def on_frame(self, frame: cv.Mat):
         if frame is not None:
             self.last_screen = frame
-            time.sleep(0.01)
-            # 复制一份屏幕数据到screen
-            screen = self.last_screen.copy()
+            # 如果上一帧还未处理完，直接丢弃本帧
+            if self.processing_frame:
+                return
+            # 标记当前帧正在处理
+            self.processing_frame = True
+            try:
+                # 复制一份屏幕数据到screen
+                screen = self.last_screen.copy()
+                s = time.time()
+                result = self.yolo(screen)
+                log.logger.info(f'匹配耗时{int((time.time() - s) * 1000)} ms')
+                self.draw_image(screen, result)
+                self.result = result
+                self.draw_screem = screen
+                if self.window_size == (0, 0):
+                    self.window_size = self.last_screen.shape[1], self.last_screen.shape[0]
+            finally:
+                # 处理完成，释放标志
+                self.processing_frame = False
 
-            s = time.time()
-            result = self.yolo(screen)
-            # log.logger.info(f'匹配耗时{int((time.time() - s) * 1000)} ms')
-            self.draw_image(screen, result)
-            self.result = result
-            self.draw_screem = screen
-            if self.window_size == (0, 0):
-                self.window_size = self.last_screen.shape[1], self.last_screen.shape[0]
+
 
     def draw_image(self, screen, result):
         if screen is None:
