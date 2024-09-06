@@ -3,8 +3,8 @@ from adbutils import adb
 import scrcpy
 import cv2 as cv
 import time
+import adbutils
 
-from logger import log
 from utils import room_calutil
 from utils.cvmatch import image_match_util
 from utils.dnf_config import DnfConfig
@@ -12,18 +12,34 @@ from utils.yolov5 import YoloV5s
 
 
 class ScrcpyADB:
-    def __init__(self, max_width=0, real_width=2340):
+    def __init__(self, max_width=0, real_width=2336):
         self.global_cfg = DnfConfig()
         self.yolo = YoloV5s(target_size=640,
                             prob_threshold=0.25,
                             nms_threshold=0.45,
                             num_threads=4,
                             use_gpu=True)
-        devices = adb.device_list()
-        client = scrcpy.Client(device=devices[0], max_width=max_width,max_fps=15,bitrate = 8000000)
-        # You can also pass an ADBClient instance to it
-        adb.connect(self.global_cfg.get_by_key('device'))
-        log.logger.info(f"Devices: {devices}, Client: {client}")
+        if self.global_cfg.get_by_key('device_wifi_enable') == 1:
+            # 获取设备列表并连接到目标设备
+            self.adb = adbutils.AdbClient(host="127.0.0.1", port=5037)
+
+            # 使用无线 IP 连接 ADB（假设 IP 地址为 global_cfg 配置中的某个键）
+            device_ip = self.global_cfg.get_by_key('device_ip')
+            self.adb.connect(device_ip)  # 通过 IP 地址无线连接设备
+            print(f"Connected to {device_ip}")
+
+            devices = self.adb.device_list()
+            if not devices:
+                raise RuntimeError("No devices found")
+
+            # 创建 Scrcpy 客户端实例
+            client = scrcpy.Client(device=devices[0], max_width=max_width, max_fps=15)
+        else:
+            devices = adb.device_list()
+            client = scrcpy.Client(device=devices[0], max_width=max_width,max_fps=15)
+            # You can also pass an ADBClient instance to it
+            adb.connect(self.global_cfg.get_by_key('device'))
+        print(devices, client)
         # 缩放比例
         self.zoom_ratio = 1 if max_width == 0 else max_width / real_width
         room_calutil.zoom_ratio = self.zoom_ratio
