@@ -240,6 +240,7 @@ class GameAction:
                     if next_room is None:
                         log.logger.info('没有找到下一个房间')
                         return result
+                    log.logger.info(f'当前房间{cur_room},下一房间{next_room}')
                     self.param.cur_room = cur_room
                     self.param.next_room = next_room
                     if cur_room == (1,1):
@@ -268,11 +269,24 @@ class GameAction:
                 continue
 
             if map_distinguish == 2:
-            # 重新，根据箭头移动方法,返回移动的方向
-                direction = self.move_to_go(hero)
+                #找出当前房间号
+                flag, cur_room = room_calutil.find_cur_room(self.adb.last_screen, self.param.cur_room)
+                if flag is False:
+                    route_id, cur_room, point = self.get_cur_room_index()
+                self.param.cur_room = cur_room
+                if cur_room is None:
+                    log.logger.info('没有找到地图和当前房间')
+                    return result
+                _, next_room = room_calutil.get_next_room(cur_room, self.param.is_succ_sztroom)
+                self.param.cur_room = cur_room
+                self.param.next_room = next_room
+                if cur_room == (1, 1):
+                    self.param.is_succ_sztroom = True
+                # 重新，根据箭头移动方法,返回移动的方向
+                direction = self.move_to_go(hero,self.param.next_room)
+                screen, result = self.find_result()
                 if direction is None:
                     continue
-
 
             hx, hy = get_detect_obj_bottom(hero)
             diff = abs(hx-lax)+abs(hy-lay)
@@ -355,7 +369,11 @@ class GameAction:
         self.move_to_xy(sx, sy)
         time.sleep(mov_time)
 
-    def move_to_go(self,hero):
+    def move_to_go(self, hero, next_room):
+        if next_room == (1, 1):
+            mx, my = self.ctrl.calc_move_point_direction('left')
+            self.move_to_xy(mx, my)
+            return 'left'
         screen, result = self.find_result()
         tag = self.find_tag(result, ['go', 'go_d', 'go_r', 'go_u'])
 
@@ -707,9 +725,9 @@ class GameAction:
                 self.ctrl.click(1306, 689)
                 # 初始化参数
                 self.param = GameParamVO()
-
         except Exception as e:
             log.logger.info('没有找到再次挑战按钮:', e)
+
     def test(self):
         log.logger.info(f'开始释放房间{self.param.cur_room}的固定技能。。。')
         self.attack.room_skill(self.param.cur_room)

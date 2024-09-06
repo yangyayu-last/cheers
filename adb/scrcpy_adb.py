@@ -67,7 +67,7 @@ class ScrcpyADB:
                 screen = self.last_screen.copy()
                 s = time.time()
                 result = self.yolo(screen)
-                log.logger.info(f'匹配耗时{int((time.time() - s) * 1000)} ms')
+                # log.logger.info(f'匹配耗时{int((time.time() - s) * 1000)} ms')
                 self.draw_image(screen, result)
                 self.result = result
                 self.draw_screem = screen

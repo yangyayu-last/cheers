@@ -49,6 +49,7 @@ room_skills:
   - - room_ij: [ 2, 0 ]
     - skill_name: move
       param: [ 280, 0.5 ]
+      wait: 0.5
     - skill_name: move
       param: [ 180, 0.1 ]
     - skill_name: skill_4
@@ -133,15 +134,14 @@ room_skills:
 hurt_skills:
   - - { skill_name: skill_d, time: 0.1 }
     - { skill_name: attack, time: 1 }
-
-  - - { skill_name: skill_f, time: 0.1 }
+    - { skill_name: skill_f, time: 0.1 }
     - { skill_name: attack, time: 1 }
+    - { skill_name: skill_4, time: 0.1 }
 
   - - { skill_name: skill_2, time: 0.3 }
     - { skill_name: attack, time: 1 }
+    - { skill_name: skill_3, time: 0.5 }
 
-  - - { skill_name: skill_3, time: 0.5 }
-    - { skill_name: skill_4, time: 0.1 }
-    - { skill_name: skill_5, time: 0.1 }
+  - - { skill_name: skill_5, time: 0.1 }
     - { skill_name: skill_1, time: 0.1 }
     - { skill_name: attack, time: 1 }

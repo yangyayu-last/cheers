@@ -122,6 +122,7 @@ def get_next_room(cur_room, is_succ_sztroom: bool = False):
         return None, None
     # 狮子头房间刷过了，不用去了
     if is_succ_sztroom and cur_room == (1, 2):
+        log.logger.info("狮子头刷过了，不用去了")
         return 7, (1, 3)
     # 狮子头房间=5,(1,1) 没有刷，但是不小心进去下一个了,往回走
     if not is_succ_sztroom and ind > 5:
@@ -246,10 +247,10 @@ def find_cur_room(screen,cur_room, confi=0.7):
                     flag = True
                     most_similar_room = current_room
     log.logger.info(f'匹配房间结果：{flag},房间行列号:{most_similar_room}')
-    if cur_room[0] - most_similar_room[0] != 1 or cur_room[0] - most_similar_room[0] != 0:
+    if cur_room[0] - most_similar_room[0] not in {0, 1,-1}:
         log.logger.info(f'1匹配房间误差太大，使用原有数据,当前房间号:{cur_room},匹配的房间号:{most_similar_room}')
         return flag, cur_room
-    elif cur_room[1] - most_similar_room[1] != 1 or cur_room[1] - most_similar_room[1] != 0:
+    elif cur_room[1] - most_similar_room[1] not in {0, 1,-1}:
         log.logger.info(f'2匹配房间误差太大，使用原有数据,当前房间号:{cur_room},匹配的房间号:{most_similar_room}')
         return flag, cur_room
 
