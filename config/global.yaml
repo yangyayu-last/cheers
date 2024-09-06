@@ -11,13 +11,13 @@
 
 
 #是否在pc展示手机画面
-scrcpy_show_window: false
+scrcpy_show_window: True
 #地图识别模式1:小地图识别，2:箭头识别
-map_distinguish: 1
+map_distinguish: 2
 
 #adb无线投屏，device_wifi_enable是否启用：1启动，2禁用。device_ip设备的IP地址
-device_wifi_enable: 2
-device_ip: 192.168.137.217:42953
+device_wifi_enable: 1
+device_ip: 192.168.31.125:38203
 
 # 链接的设备名或ip端口
 #device: adb-24ed1083-yGX7n1._adb-tls-connect._tcp.
@@ -50,7 +50,7 @@ role_config:
 # 技能与方向坐标点配置
 coordinates:
   wheel_center: [398, 815] # 方向轮盘的中心点
-  wheel_radius: 100 # 方向轮盘的半径 比实际的半径要小一点
+  wheel_radius: 125 # 方向轮盘的半径 比实际的半径要小一点
   attack: [2050, 920] # 攻击按钮的坐标
   skill_d: [1447, 963] # 底部左边两个技能 d f
   skill_f: [1618, 973]

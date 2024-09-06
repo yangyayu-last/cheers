@@ -4,6 +4,7 @@ from time import sleep
 import cv2
 import yaml
 
+from adb.scrcpy_adb import ScrcpyADB
 from logger import log
 from game import GameControl
 from utils import dnf_config, room_calutil
@@ -179,9 +180,10 @@ class AttackMaster():
 
 
 if __name__ == '__main__':
-    attack_master = AttackMaster(None)
+    ctrl = GameControl(ScrcpyADB(1384))
+    attack_master = AttackMaster(ctrl)
     # attack_master.room_skill((1,1))
     # attack_master.hurt_skill()
-    attack_master.state_skill()
+    # attack_master.state_skill()
     # attack_master.buff_skill()
     pass

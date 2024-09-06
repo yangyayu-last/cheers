@@ -246,13 +246,15 @@ def find_cur_room(screen,cur_room, confi=0.7):
                     confidence = res['confidence']
                     flag = True
                     most_similar_room = current_room
-    log.logger.info(f'匹配房间结果：{flag},房间行列号:{most_similar_room}')
-    if cur_room[0] - most_similar_room[0] not in {0, 1,-1}:
-        log.logger.info(f'1匹配房间误差太大，使用原有数据,当前房间号:{cur_room},匹配的房间号:{most_similar_room}')
-        return flag, cur_room
-    elif cur_room[1] - most_similar_room[1] not in {0, 1,-1}:
-        log.logger.info(f'2匹配房间误差太大，使用原有数据,当前房间号:{cur_room},匹配的房间号:{most_similar_room}')
-        return flag, cur_room
+
+    if most_similar_room is not None:
+        log.logger.info(f'匹配房间结果：{flag},房间行列号:{most_similar_room}')
+        if cur_room[0] - most_similar_room[0] not in {0, 1,-1}:
+            log.logger.info(f'1匹配房间误差太大，使用原有数据,当前房间号:{cur_room},匹配的房间号:{most_similar_room}')
+            return flag, cur_room
+        elif cur_room[1] - most_similar_room[1] not in {0, 1,-1}:
+            log.logger.info(f'2匹配房间误差太大，使用原有数据,当前房间号:{cur_room},匹配的房间号:{most_similar_room}')
+            return flag, cur_room
 
     return flag, most_similar_room
 

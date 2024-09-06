@@ -1,7 +1,12 @@
+import multiprocessing
 import os
+import queue
 import random
+import threading
 import traceback
 from typing import Tuple
+
+import cv2
 
 from game.Gameloop import GameLoop
 from game.attack.attack_master import AttackMaster
@@ -79,6 +84,27 @@ def calc_angle(x1, y1, x2, y2):
     angle = math.atan2(y1 - y2, x1 - x2)
     return 180 - int(angle * 180 / math.pi)
 
+def show_frame(frame_queue):
+    while True:
+        if not frame_queue.empty():
+            frame = frame_queue.get()
+            # cv2.imshow('screen', frame)
+            # 加载图像
+            # image = cv2.imread(frame, cv2.IMREAD_COLOR)
+
+            # 将帧转换为 UMat 格式，利用 OpenCL 加速（如卡顿问题严重，可以去掉这步）
+            # result = cv2.UMat(frame)  # 如果 OpenCL 引发性能问题，可以改回普通 Mat 格式
+
+            # 使用 OpenCL 加速的函数,暂不使用灰度模式
+            # result = cv2.cvtColor(u_image, cv2.COLOR_BGR2GRAY)
+
+            # 显示结果
+            cv2.imshow('screen', frame)
+            # cv2.waitKey(1)
+            if cv2.waitKey(10) & 0xFF == ord('q'):
+                break  # 添加退出条件，防止线程卡死
+    # 关闭显示窗口
+    cv2.destroyAllWindows()
 
 
 class GameAction:
@@ -107,9 +133,19 @@ class GameAction:
         self.again_button_img = cv.imread(image_path)
         # 修理装备
         self.repair_equipment = cv.imread(image_path2)
+        #帧显示
+        self.frame_counter = 0
+        self.frame_queue = multiprocessing.Queue(maxsize=15)
+        self.start_game(self)
 
         # todo 稳定后可根据配置加载不同地图
         room_calutil.load_map_template('bwj_room')
+        # 启用 OpenCL 加速
+        cv2.ocl.setUseOpenCL(True)
+        if cv2.ocl.haveOpenCL():
+            print("OpenCL is available.")
+        else:
+            print("OpenCL is not available.")
 
     # 传递x,y坐标，offset为要偏移的坐标幅度，之后得到一个随机幅度的x，y坐标
     def random_xy(self, x, y, offset):
@@ -128,13 +164,38 @@ class GameAction:
             # cv.waitKey(1)
             return screen, result
 
+    @staticmethod
+    def start_game(self):
+        # 创建线程并运行
+        # 创建帧队列，最大容量为 10
+        frame_queue = self.frame_queue
+        # 创建并启动显示帧的进程
+        show_process = multiprocessing.Process(target=show_frame, args=(frame_queue,))
+        show_process.start()
+
     def cv_show(self, screen):
         """
         判断是否需要展示窗口页面
         """
         show = self.global_cfg.get_by_key("scrcpy_show_window")
         if show:
-            cv.imshow('screen', screen)
+            try:
+                # 尝试将帧放入队列，队列满时不阻塞
+                # cv.imshow('screen', screen)
+                self.frame_counter += 1
+                if self.frame_counter % 3 == 0:
+                    self.frame_queue.put(screen)
+            except queue.Full:
+                self.clear_queue(self.frame_queue)  # 清空队列中的帧，避免阻塞
+                pass  # 忽略满队列的异常，防止阻塞
+
+    def clear_queue(self,q):
+        """清空队列中的所有元素"""
+        while not q.empty():
+            try:
+                q.get_nowait()  # 非阻塞地获取队列中的元素并丢弃
+            except queue.Empty:
+                return
 
     def display_image(self, screen, result):
         if screen is None:
@@ -851,4 +912,5 @@ if __name__ == '__main__':
     """
     # run()
     test()
+    GameAction.show_frame()
 
