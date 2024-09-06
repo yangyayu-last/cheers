@@ -155,6 +155,25 @@ def get_run_direction(cur_room,next_room):
         else:
             return 'down'
 
+def determine_direction(hx, hy, ax, ay):
+    """
+    计算目标对象 (ax, ay) 相对于 hero (hx, hy) 的方向。
+
+    参数:
+    - hx, hy: hero 对象的底部坐标。
+    - ax, ay: 目标对象的底部坐标。
+
+    返回:
+    - 'left', 'right', 'up', 'down' 其中之一，表示目标相对于 hero 的方向。
+    """
+    if ax < hx:  # 目标在 hero 的左侧
+        return 'left'
+    elif ax > hx:  # 目标在 hero 的右侧
+        return 'right'
+    elif ay < hy:  # 目标在 hero 的上方
+        return 'up'
+    elif ay > hy:  # 目标在 hero 的下方
+        return 'down'
 
 def get_tag_by_direction(direction):
     # 计算行走的方向
@@ -186,13 +205,19 @@ def load_map_template(map_name='bwj_room'):
         log.logger.info(f"加载{map_name}地图模板时发生错误: {e}")
 
 
-def find_cur_room(screen, confi=0.7):
+def find_cur_room(screen,cur_room, confi=0.7):
     """
     根据小地图特征找当前房间
     :param screen: 当前帧
     :param confi: 默认最小置信度
     :return: flag 是否匹配成功, room
     """
+    #加入当前图的判断，已经过去的图，不再判断,index为当前地图的索引
+    index  = 0
+    if cur_room in room_route:
+        index = room_route.index(cur_room)
+        log.logger.info(f'当前房间索引号{cur_room}')
+
     flag = False
     most_similar_room = None
     if _img_map is None or _cfgs is None:
@@ -204,7 +229,15 @@ def find_cur_room(screen, confi=0.7):
             crop = cfg['rect']
             img_name = cfg['img_name']
             img = _img_map[img_name]
+            #配置文件中的每一个地图
             current_room = tuple(cfg['name'])
+            #加入当前图的判断，已经过去的图，不再判断
+            if current_room in room_route:
+                if room_route.index(current_room) < index:
+                    log.logger.info(f'已经过图,不在判断{current_room}')
+                    continue
+            else:
+                log.logger.info(f'找不到当前房间号:{current_room}')
             res = image_match_util.cvmatch_template_best(img, screen,current_room, crop,)
             if res is not None:
                 # 取可信度最高的匹配结果
@@ -213,6 +246,13 @@ def find_cur_room(screen, confi=0.7):
                     flag = True
                     most_similar_room = current_room
     log.logger.info(f'匹配房间结果：{flag},房间行列号:{most_similar_room}')
+    if cur_room[0] - most_similar_room[0] != 1 or cur_room[0] - most_similar_room[0] != 0:
+        log.logger.info(f'1匹配房间误差太大，使用原有数据,当前房间号:{cur_room},匹配的房间号:{most_similar_room}')
+        return flag, cur_room
+    elif cur_room[1] - most_similar_room[1] != 1 or cur_room[1] - most_similar_room[1] != 0:
+        log.logger.info(f'2匹配房间误差太大，使用原有数据,当前房间号:{cur_room},匹配的房间号:{most_similar_room}')
+        return flag, cur_room
+
     return flag, most_similar_room
 
 if __name__ == '__main__':

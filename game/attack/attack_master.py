@@ -134,9 +134,9 @@ class AttackMaster():
         for skill in buff_skills:
             try:
                 skill_name = get_by_key(skill, 'skill_name')
-                # 技能还在冷却，则跳过
-                if if_vaild and not self.is_ready(skill_name,last_screen):
-                    continue
+                # 技能还在冷却，则跳过(先去处掉判断)
+                # if if_vaild and not self.is_ready(skill_name,last_screen):
+                #     continue
                 # 释放技能
                 skill_method = getattr(self.ctrl, skill_name)
                 time = get_by_key(skill, 'time')
@@ -150,10 +150,10 @@ class AttackMaster():
                     skill_method()
                 # 配置了等待时间，则等待
                 wait = get_by_key(skill, 'wait')
-                if wait:
+                if wait and wait > 0:
                     sleep(wait)
             except Exception as e:
-                log.logger.info(e)
+                log.logger.exception(e)
 
     def room_skill(self, cur_room):
         """

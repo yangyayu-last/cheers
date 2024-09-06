@@ -14,7 +14,8 @@ class GameParamVO:
         self.next_angle = 0
         # 移动超时时间
         self.move_time_out = 0
-
         self.mov_start = False
         # 对于只需要开启一次的技能，是否已经开启
         self.skill_start = False
+        # 定义一个字典，用来存储房间和对应的 int 值，判断是否已经释放过房间技能
+        self.room_map = {}

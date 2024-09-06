@@ -221,36 +221,38 @@ class GameAction:
                 self.adb.touch_end(0, 0)
                 return result
 
-            # 1 先确定要行走的方向
-            if direction is None:
-                flag, cur_room = room_calutil.find_cur_room(self.adb.last_screen)
-                if flag is False:
-                    route_id, cur_room, point = self.get_cur_room_index()
-                #不在根据小地图特诊确定，直接使用大图（大地图模型识别有误差）
-                # route_id, cur_room, point = self.get_cur_room_index()
-                self.param.cur_room = cur_room
-                if cur_room is None:
-                    log.logger.info('没有找到地图和当前房间')
-                    return result
-                _, next_room = room_calutil.get_next_room(cur_room, self.param.is_succ_sztroom)
+            map_distinguish = self.global_cfg.get_by_key("map_distinguish")
+            if map_distinguish == 1:
+                # 1 先确定要行走的方向
+                if direction is None:
+                    flag, cur_room = room_calutil.find_cur_room(self.adb.last_screen,self.param.cur_room)
+                    if flag is False:
+                        route_id, cur_room, point = self.get_cur_room_index()
+                    #不在根据小地图特诊确定，直接使用大图（大地图模型识别有误差）
+                    # route_id, cur_room, point = self.get_cur_room_index()
+                    self.param.cur_room = cur_room
+                    if cur_room is None:
+                        log.logger.info('没有找到地图和当前房间')
+                        return result
+                    _, next_room = room_calutil.get_next_room(cur_room, self.param.is_succ_sztroom)
 
-                if next_room is None:
-                    log.logger.info('没有找到下一个房间')
-                    return result
-                self.param.cur_room = cur_room
-                self.param.next_room = next_room
-                if cur_room == (1,1):
-                    self.param.is_succ_sztroom = True
-                direction = room_calutil.get_run_direction(cur_room, next_room)
-                mx, my = self.ctrl.calc_move_point_direction(direction)
-                self.move_to_xy(mx, my)
-                screen, result = self.find_result()
-            else:
-                # 按方向走起来
-                mx, my = self.ctrl.calc_move_point_direction(direction)
-                self.move_to_xy(mx, my)
+                    if next_room is None:
+                        log.logger.info('没有找到下一个房间')
+                        return result
+                    self.param.cur_room = cur_room
+                    self.param.next_room = next_room
+                    if cur_room == (1,1):
+                        self.param.is_succ_sztroom = True
+                    direction = room_calutil.get_run_direction(cur_room, next_room)
+                    mx, my = self.ctrl.calc_move_point_direction(direction)
+                    self.move_to_xy(mx, my)
+                    screen, result = self.find_result()
+                else:
+                    # 按方向走起来
+                    mx, my = self.ctrl.calc_move_point_direction(direction)
+                    self.move_to_xy(mx, my)
 
-            log.logger.info(f'当前所在房间id：{self.param.cur_room},移动方向：{direction}，当前是否移动：{self.param.mov_start}')
+                log.logger.info(f'当前所在房间id：{self.param.cur_room},移动方向：{direction}，当前是否移动：{self.param.mov_start}')
 
             # 3 先找到英雄位置，在找到对应方向的门进入
             hero = self.find_one_tag(result, 'hero')
@@ -259,10 +261,17 @@ class GameAction:
                 log.logger.info(f'没有找到英雄,{hero_no}次。')
                 # mov_start = False
                 # self.adb.touch_end(0, 0)
-                if hero_no > 8:
+                if hero_no > 2:
                     hero_no = 0
                     self.no_hero_handle(result)
                 continue
+
+            if map_distinguish == 2:
+            # 重新，根据箭头移动方法,返回移动的方向
+                direction = self.move_to_go(hero)
+                if direction is None:
+                    continue
+
 
             hx, hy = get_detect_obj_bottom(hero)
             diff = abs(hx-lax)+abs(hy-lay)
@@ -345,6 +354,23 @@ class GameAction:
         self.move_to_xy(sx, sy)
         time.sleep(mov_time)
 
+    def move_to_go(self,hero):
+        screen, result = self.find_result()
+        tag = self.find_tag(result, ['go', 'go_d', 'go_r', 'go_u'])
+
+        if tag is None or len(tag) == 0:
+            return None
+        hx, hy = get_detect_obj_bottom(hero)
+
+        min_distance_obj = max(tag, key=lambda a: distance_detect_object(hero, a))
+        ax, ay = get_detect_obj_bottom(min_distance_obj)
+
+        self.move_to_target(tag, hero, hx, hy, screen)
+        # 计算ax和ay在hx和hy的哪个方向，返回left,right,up,down
+        direction = room_calutil.determine_direction(hx, hy, ax, ay)
+        return direction
+
+
     def move_to_xy(self, x, y, out_time=3):
         """
         移动到指定位置,默认2秒超时
@@ -383,11 +409,11 @@ class GameAction:
             while np.sum(cv.adaptiveThreshold(cv.cvtColor(self.ctrl.adb.last_screen, cv.COLOR_BGR2GRAY), 255,
                                               cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, 13, 3)) >= 600000:
                 time.sleep(0.2)
-            flag, cur_room = room_calutil.find_cur_room(self.adb.last_screen)
+            flag, cur_room = room_calutil.find_cur_room(self.adb.last_screen,self.param.cur_room)
             cnt = 0
             while not flag and cnt <= 10:
                 time.sleep(0.2)
-                flag, cur_room = room_calutil.find_cur_room(self.adb.last_screen)
+                flag, cur_room = room_calutil.find_cur_room(self.adb.last_screen,self.param.cur_room)
                 cnt += 1
             self.param.cur_room = cur_room if flag else self.param.next_room
             return True
@@ -414,7 +440,7 @@ class GameAction:
             if len(hero) == 0:
                 hero_no += 1
                 log.logger.info(f'没有找到英雄,{hero_no}次。')
-                if hero_no > 5:
+                if hero_no > 2:
                     time.sleep(0.2)
                     hero_no = 0
                     self.no_hero_handle(result)
@@ -436,11 +462,10 @@ class GameAction:
                     log.logger.info('捡装备，超过3秒，随机移动。。。')
                     self.no_hero_handle(mov_time=1)
                     start_pick = time.time()
-
             else:
                 # 没有装备就跳出去
                 check_cnt += 1
-                if check_cnt >= 5:
+                if check_cnt >= 2:
                     log.logger.info(f'没有装备，停止移动。当前移动状态：{self.param.mov_start}')
                     if self.param.mov_start:
                         self.param.mov_start = False
@@ -448,6 +473,8 @@ class GameAction:
                     return result
                 log.logger.info(f'没有找到装备:{check_cnt} 次。。。')
                 continue
+
+
 
 
     def attack_master(self):
@@ -493,8 +520,11 @@ class GameAction:
                 if room_skill_flag:
                     room_skill_flag = False
                     # 先来一套固定技能，然后在随机打
-                    log.logger.info(f'开始释放房间{self.param.cur_room}的固定技能。。。')
-                    self.attack.room_skill(self.param.cur_room)
+                    if self.param.room_map.get(self.param.cur_room, -1) == -1:
+                        log.logger.info(f'开始释放房间{self.param.cur_room}的固定技能。。。')
+                        self.param.room_map[self.param.cur_room] = 1
+                        self.attack.room_skill(self.param.cur_room)
+
 
                 # 最近距离的怪物坐标
                 nearest_monster = min(monster, key=lambda a: distance_detect_object(hero, a))
@@ -510,7 +540,6 @@ class GameAction:
                     self.attack.unique_skill()
                     log.logger.info('狮子头房间放觉醒完成释放')
                     continue
-
                 if distance <= attack_distance * ratio and y_dis <= 100*ratio:
                     # 面向敌人
                     angle = calc_angle(hx, hy, ax, hy)
@@ -543,12 +572,10 @@ class GameAction:
                 if time.time()-mov_to_master_start > 3:
                     self.no_hero_handle(mov_time=1)
                     mov_to_master_start = time.time()
-
-
             else:
                 time.sleep(0.1)
                 check_cnt += 1
-                if check_cnt >= 5:
+                if check_cnt >= 2:
                     log.logger.info(f'没有找到怪物:{check_cnt}次。。。')
                     return
 
@@ -693,29 +720,46 @@ def run():
     action = GameAction(ctrl)
 
     while True:
+        # try:
+        #     # 根据出现的元素分配动作
+        #     result_ = action.find_result()[1]
+        #     if len(action.find_tag(result_, ['Monster', 'Monster_ds', 'Monster_szt'])) > 0:
+        #         log.logger.info('--------------------------------发现怪物，开始攻击--------------------------------')
+        #         action.attack_master()
+        #     elif len(action.find_tag(result_, 'equipment'))>0:
+        #         log.logger.info('--------------------------------发现装备，开始捡起装备--------------------------------')
+        #         action.pick_up_equipment()
+        #     elif len(action.find_tag(result_, ['go', 'go_d', 'go_r', 'go_u', 'opendoor_d', 'opendoor_r', 'opendoor_u', 'opendoor_l'])) > 0:
+        #         log.logger.info('--------------------------------发现门，开始移动到下一个房间--------------------------------')
+        #         action.move_to_next_room()
+        #     elif len(action.find_tag(result_, ['select', 'start', 'card']))>0:
+        #         log.logger.info('--------------------------------发现选择框或牌子卡片，开始选择--------------------------------')
+        #         action.reset_start_game()
+        #     action.again()
         try:
             # log.logger.info('测试')
             # 根据出现的元素分配动作
-            result_ = action.find_result()[1]
-            if len(action.find_tag(result_, ['Monster', 'Monster_ds', 'Monster_szt'])) > 0:
-                log.logger.info('--------------------------------发现怪物，开始攻击--------------------------------')
-                action.attack_master()
-                continue
-            elif len(action.find_tag(result_, 'equipment'))>0:
+            start_time = time.time()  # 记录循环开始的时间
+            if len(action.find_tag(action.find_result()[1], 'equipment'))>0:
                 log.logger.info('--------------------------------发现装备，开始捡起装备--------------------------------')
                 action.pick_up_equipment()
-            elif len(action.find_tag(result_, ['go', 'go_d', 'go_r', 'go_u', 'opendoor_d', 'opendoor_r', 'opendoor_u', 'opendoor_l'])) > 0:
+            if len(action.find_tag(action.find_result()[1], ['go', 'go_d', 'go_r', 'go_u','opendoor_d', 'opendoor_r', 'opendoor_u', 'opendoor_l'])) > 0:
                 log.logger.info('--------------------------------发现门，开始移动到下一个房间--------------------------------')
                 action.move_to_next_room()
-            elif len(action.find_tag(result_, ['select', 'start', 'card']))>0:
+            if len(action.find_tag(action.find_result()[1], ['Monster', 'Monster_ds', 'Monster_szt'])) > 0:
+                log.logger.info('--------------------------------发现怪物，开始攻击--------------------------------')
+                action.attack_master()
+            if len(action.find_tag(action.find_result()[1], ['select', 'start', 'card']))>0:
                 log.logger.info('--------------------------------发现选择框或牌子卡片，开始选择--------------------------------')
                 action.reset_start_game()
             # action.again()
+            end_time = time.time()  # 记录循环结束的时间
+            elapsed_time = end_time - start_time  # 计算本次循环花费的时间
+            log.logger.info(f"一次循环花费时间: {elapsed_time:.4f} 秒")
         except Exception as e:
             action.param.mov_start = False
             log.logger.info(f'出现异常:{e}')
             traceback.print_exc()
-
     log.logger.info('程序结束...')
     while True:
         log.logger.info('全部完成，展示帧画面...')
@@ -732,7 +776,7 @@ def test():
             action.find_result()
             log.logger.info('--------------------------------test start--------------------------------')
             cv.imwrite('../test.jpg', action.adb.last_screen)
-            res = room_calutil.find_cur_room(action.adb.last_screen)
+            res = room_calutil.find_cur_room(action.adb.last_screen,(1,0))
             action.param.cur_room = res[1]
             action.test()
 

@@ -41,32 +41,32 @@ unique_skills:
 # 房间技能配置
 room_skills:
   - - room_ij: [ 1, 0 ]
-    - { skill_name: move, param: [ 265, 1 ], wait: 0.1 }
-    - { skill_name: skill_2, time: 0.8 , wait: 0.2}
-    - { skill_name: attack, wait: 0.1}
-    - { skill_name: skill_3, time: 0.8 , wait: 0.2}
+    - { skill_name: move, param: [ 265, 0.4 ], wait: 1 }
+    - { skill_name: skill_2, time: 0.1 , wait: 0}
+    - { skill_name: attack, time: 1}
+    - { skill_name: skill_3, time: 0.8 , wait: 0}
 
   - - room_ij: [ 2, 0 ]
     - skill_name: move
-      param: [ 270, 1 ]
+      param: [ 260, 0.5 ]
     - skill_name: skill_4
       wait: 0.5
-    - { skill_name: skill_3, time: 0.8 , wait: 0.2}
+    - { skill_name: skill_3, time: 0.8 , wait: 0}
     - skill_name: attack
 
 
   - - room_ij: [ 2, 1 ]
+    - { skill_name: move, param: [ 180, 0.1 ], wait: 0 }
     - skill_name: skill_f
       wait: 0.2
     - skill_name: skill_d
       wait: 0.4
-    - skill_name: attack
+    - { skill_name: attack,time:0.5, wait: 0}
 
   - - room_ij: [ 2, 2 ]
-    - { skill_name: skill_r, time: 0.1 , wait: 0.1}
-    - { skill_name: skill_5, time: 1.9 , wait: 0.1}
-    - skill_name: attack
-      time: 3
+    - { skill_name: move, param: [ 180, 0.1 ] }
+    - { skill_name: skill_r, time: 0.1 , wait: 0}
+    - { skill_name: skill_5, time: 1.9 , wait: 0}
 
 
   - - room_ij: [ 1, 2 ]
@@ -75,57 +75,57 @@ room_skills:
     - skill_name: skill_e
       time: 3
       wait: 0.5
-    - skill_name: attack
+#    - skill_name: attack
     - skill_name: skill_d
-      wait: 2
-    - skill_name: attack
-      time: 3
+#      wait: 2
+#    - skill_name: attack
+#      time: 3
 
 
   - - room_ij: [ 1, 1 ]
 #    - { skill_name: move, param: [ 180, 0.5 ] }
-    - { skill_name: skill_2, time: 0.8 , wait: 0.2 }
-    - { skill_name: attack, wait: 0.1 }
-    - { skill_name: skill_3, time: 0.8 , wait: 0.2 }
-    - skill_name: attack
-      time: 2
+    - { skill_name: skill_2, time: 0.8 , wait: 0 }
+    - { skill_name: attack, time: 1 }
+    - { skill_name: skill_3, time: 0.8 , wait: 0 }
+#    - skill_name: attack
+#      time: 2
 
   - - room_ij: [ 1, 2 ]
     - skill_name: skill_f
       wait: 0.2
-    - { skill_name: skill_4, time: 0.5, wait: 0.4 }
-    - { skill_name: skill_3, time: 0.8, wait: 0.4 }
-    - skill_name: attack
+    - { skill_name: skill_4, time: 0.5, wait: 0 }
+    - { skill_name: skill_3, time: 0.8, wait: 0 }
+#    - skill_name: attack
 
   - - room_ij: [ 1, 3 ]
 #    - skill_name: move
 #      param: [ 180, 0.7 ]
-    - { skill_name: skill_2, time: 0.3 , wait: 0.2 }
-    - { skill_name: attack, wait: 0.1 }
-    - { skill_name: skill_3, time: 0.8 , wait: 0.2 }
-    - { skill_name: skill_5, time: 2, wait: 0.2 }
-    - skill_name: attack
-      time: 2
+    - { skill_name: skill_2, time: 0.3 , wait: 0 }
+    - { skill_name: attack, time: 1 }
+    - { skill_name: skill_3, time: 0.8 , wait: 0 }
+    - { skill_name: skill_5, time: 2, wait: 0 }
+#    - skill_name: attack
+#      time: 2
 
   - - room_ij: [ 1, 4 ]
 #    - skill_name: move
 #      param: [ 180, 0.7 ]
-    - { skill_name: skill_2, time: 0.3 , wait: 0.2 }
-    - { skill_name: attack, wait: 0.1 }
-    - { skill_name: skill_3, time: 0.8 , wait: 0.2 }
-    - { skill_name: skill_5, time: 2, wait: 0.2 }
-    - skill_name: attack
-      time: 2
+    - { skill_name: skill_2, time: 0.3 , wait: 0 }
+    - { skill_name: attack, time: 1 }
+    - { skill_name: skill_3, time: 0.8 , wait: 0 }
+    - { skill_name: skill_5, time: 2, wait: 0 }
+#    - skill_name: attack
+#      time: 2
 
   - - room_ij: [ 1, 5 ]
 #    - skill_name: move
 #      param: [ 180, 0.7 ]
-    - { skill_name: skill_2, time: 0.3 , wait: 0.2 }
-    - { skill_name: attack, wait: 0.1 }
-    - { skill_name: skill_3, time: 0.8 , wait: 0.2 }
-    - { skill_name: skill_5, time: 2, wait: 0.2 }
-    - skill_name: attack
-      time: 2
+    - { skill_name: skill_2, time: 0.3 , wait: 0 }
+    - { skill_name: attack, time: 1 }
+    - { skill_name: skill_3, time: 0.8 , wait: 0 }
+    - { skill_name: skill_5, time: 2, wait: 0 }
+#    - skill_name: attack
+#      time: 2
 
 # 伤害技能配置
 hurt_skills:
