@@ -11,7 +11,7 @@
 
 
 #是否在pc展示手机画面
-scrcpy_show_window: True
+scrcpy_show_window: False
 #地图识别模式1:小地图识别，2:箭头识别
 map_distinguish: 2
 

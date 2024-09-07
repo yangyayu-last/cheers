@@ -754,8 +754,9 @@ class GameAction:
                 if len(self.find_tag(result, 'equipment')) > 0:
                     return
 
-            # 发现修理装备，就修理
-            crop = (122, 55, 95, 80)
+            # 发现修理装备，就修理,真机的坐标
+            # crop = (122, 55, 95, 80)
+            crop = (149, 47, 40, 60)
             crop = tuple(int(value * room_calutil.zoom_ratio) for value in crop)
             repair_res = image_match_util.match_template_best(self.repair_equipment, self.ctrl.adb.last_screen, crop)
             if repair_res is not None:
@@ -794,6 +795,7 @@ class GameAction:
         self.attack.room_skill(self.param.cur_room)
 
 def run1():
+    frame_counter = 0
     ctrl = GameControl(ScrcpyADB(1384))  # 1384
     action = GameAction(ctrl)
     loop = GameLoop(action)
@@ -801,6 +803,9 @@ def run1():
         try:
             time.sleep(0.01)
             loop.update()
+            #检测是否重新挑战或修理装备
+            if frame_counter % 3 == 0:
+                action.again()
         except Exception as e:
             action.param.mov_start = False
             log.logger.info(f'出现异常:{e}')
@@ -846,7 +851,7 @@ def run():
                 log.logger.info('--------------------------------没有发现目标，开始随机移动--------------------------------')
                 action.no_hero_handle(result)
                 last_action = None  # 重置为无操作
-            # action.again()
+            action.again()
             end_time = time.time()  # 记录循环结束的时间
             elapsed_time = end_time - start_time  # 计算本次循环花费的时间
             log.logger.info(f"一次循环花费时间: {elapsed_time:.4f} 秒")

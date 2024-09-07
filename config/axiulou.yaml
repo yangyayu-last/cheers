@@ -42,14 +42,15 @@ unique_skills:
 # 房间技能配置
 room_skills:
   - - room_ij: [ 1, 0 ]
-    - { skill_name: move, param: [ 250, 0.5 ], wait: 0 }
+    - { skill_name: move, param: [ 330, 0.5 ], wait: 0 }
+    - { skill_name: move, param: [ 0, 0.1 ], wait: 0 }
     - { skill_name: skill_2, time: 0.1 , wait: 0}
     - { skill_name: attack, time: 1}
     - { skill_name: skill_3, time: 0.8 , wait: 0}
 
   - - room_ij: [ 2, 0 ]
     - skill_name: move
-      param: [ 200, 0.5 ]
+      param: [ 330, 0.3 ]
       wait: 0
     - skill_name: move
       param: [ 0, 0.1 ]
@@ -60,7 +61,7 @@ room_skills:
 
 
   - - room_ij: [ 2, 1 ]
-    - { skill_name: move, param: [ 280, 0.3 ], wait: 0 }
+    - { skill_name: move, param: [ 330, 0.3 ], wait: 0 }
     - skill_name: skill_f
       wait: 0.2
     - skill_name: skill_d
