@@ -357,8 +357,9 @@ class GameAction:
             if map_distinguish == 2:
                 #找出当前房间号
                 flag, cur_room = room_calutil.find_cur_room(self.adb.last_screen, self.param.cur_room)
-                if flag is False:
-                    route_id, cur_room, point = self.get_cur_room_index()
+                #不使用大地图匹配，大地图目前识别不到
+                # if flag is False:
+                #     route_id, cur_room, point = self.get_cur_room_index()
                 self.param.cur_room = cur_room
                 if cur_room is None:
                     log.logger.info('没有找到地图和当前房间')
@@ -639,6 +640,7 @@ class GameAction:
                 y_dis = abs(ay - hy)
                 log.logger.info(f'最近距离的怪物坐标：{ax},{ay},距离：{distance},y距离：{y_dis}')
                 ratio = room_calutil.zoom_ratio
+                # if self.param.cur_room == (1,1) and attak_cnt == 0:
                 if self.param.cur_room == (1,1) and attak_cnt == 0:
                     attak_cnt += 1
                     # 狮子头房间放觉醒
