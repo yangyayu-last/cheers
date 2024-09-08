@@ -17,7 +17,7 @@ map_distinguish: 2
 
 #adb无线投屏，device_wifi_enable是否启用：1启动，2禁用。device_ip设备的IP地址
 device_wifi_enable: 1
-device_ip: 192.168.31.125:38203
+device_ip: 192.168.31.125:41805
 
 # 链接的设备名或ip端口
 #device: adb-24ed1083-yGX7n1._adb-tls-connect._tcp.
