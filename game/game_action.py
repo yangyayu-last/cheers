@@ -106,6 +106,26 @@ def show_frame(frame_queue):
     # 关闭显示窗口
     cv2.destroyAllWindows()
 
+class AutoCleaningQueue:
+    def __init__(self, maxsize=0):
+        self.queue = multiprocessing.Queue(maxsize)
+
+    def put(self, item, block=True, timeout=None):
+        if self.queue.full():
+            self.queue.get()  # 自动丢弃最旧的元素
+        self.queue.put(item, block, timeout)
+
+    def get(self, block=True, timeout=None):
+        return self.queue.get(block, timeout)
+
+    def full(self):
+        return self.queue.full()
+
+    def empty(self):
+        return self.queue.empty()
+
+    def qsize(self):
+        return self.queue.qsize()
 
 class GameAction:
 
@@ -135,7 +155,8 @@ class GameAction:
         self.repair_equipment = cv.imread(image_path2)
         #帧显示
         self.frame_counter = 0
-        self.frame_queue = multiprocessing.Queue(maxsize=15)
+        # self.frame_queue = multiprocessing.Queue(maxsize=15)
+        self.frame_queue = AutoCleaningQueue(maxsize=3)
         self.start_game(self)
 
         # todo 稳定后可根据配置加载不同地图
@@ -201,17 +222,21 @@ class GameAction:
         if screen is None:
             return
         for obj in result:
-            color = (2 ** (obj.label % 9) - 1, 2 ** ((obj.label + 4) % 9) - 1, 2 ** ((obj.label + 8) % 9) - 1)
+            try:
+                color = (2 ** (obj.label % 9) - 1, 2 ** ((obj.label + 4) % 9) - 1, 2 ** ((obj.label + 8) % 9) - 1)
 
-            cv.rectangle(screen,
-                         (int(obj.rect.x), int(obj.rect.y)),
-                         (int(obj.rect.x + obj.rect.w), int(obj.rect.y + + obj.rect.h)),
-                         color, 2
-                         )
-            text = f"{self.yolo.class_names[int(obj.label)]}:{obj.prob:.2f}"
-            self.adb.plot_one_box([obj.rect.x, obj.rect.y, obj.rect.x + obj.rect.w, obj.rect.y + obj.rect.h], screen,
-                                  color=color, label=text, line_thickness=2)
-        self.cv_show(screen)
+                cv.rectangle(screen,
+                             (int(obj.rect.x), int(obj.rect.y)),
+                             (int(obj.rect.x + obj.rect.w), int(obj.rect.y + + obj.rect.h)),
+                             color, 2
+                             )
+                text = f"{self.yolo.class_names[int(obj.label)]}:{obj.prob:.2f}"
+                self.adb.plot_one_box([obj.rect.x, obj.rect.y, obj.rect.x + obj.rect.w, obj.rect.y + obj.rect.h], screen,
+                                      color=color, label=text, line_thickness=2)
+            except Exception as e:
+                log.logger.error("画框异常")
+                log.logger.error(e)
+        # self.cv_show(screen)
         cv.waitKey(1)
 
     def get_cur_room_index(self):
@@ -666,7 +691,7 @@ class GameAction:
         cv.circle(screen, (hx, hy), 5, (0, 255, 0), 5)
         cv.circle(screen, (ax, ay), 5, (0, 255, 255), 5)
         cv.arrowedLine(screen, (hx, hy), (ax, ay), (255, 0, 0), 3)
-        self.cv_show(screen)
+        # self.cv_show(screen)
         cv.waitKey(1)
 
 
@@ -917,5 +942,8 @@ if __name__ == '__main__':
     """
     # run()
     test()
+    frame_queue = AutoCleaningQueue(maxsize=10)
+    show_process = multiprocessing.Process(target=show_frame, args=(frame_queue,))
+    show_process.start()
     GameAction.show_frame()
 
