@@ -255,6 +255,9 @@ def find_cur_room(screen,cur_room, confi=0.7):
         elif cur_room[1] - most_similar_room[1] not in {0, 1,-1}:
             log.logger.info(f'2匹配房间误差太大，使用原有数据,当前房间号:{cur_room},匹配的房间号:{most_similar_room}')
             return flag, cur_room
+    else:
+        #新增，匹配地图失败，直接返回预定路线中的地图
+        return flag, cur_room
 
     return flag, most_similar_room
 
