@@ -6,8 +6,6 @@ from logger import log
 from adb.scrcpy_adb import ScrcpyADB
 import math
 
-from utils.dnf_config import DnfConfig
-
 
 class GameControl:
     def __init__(self, adb: ScrcpyADB):

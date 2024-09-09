@@ -20,7 +20,10 @@ from ncnn.utils.objects import Detect_Object
 from ncnn.utils.functional import *
 import torch
 from torchvision.ops import box_iou
+import threading
 
+from logger import log
+import cv2 as cv
 
 class YoloV5Focus(ncnn.Layer):
     yolov5FocusLayers = []
@@ -63,17 +66,22 @@ def YoloV5Focus_layer_destroyer(layer):
 class YoloV5s:
     def __init__(
         self,
+        image_queue, infer_queue, show_queue,global_cfg,
         target_size=640,
         prob_threshold=0.25,
         nms_threshold=0.45,
         num_threads=1,
         use_gpu=False,
     ):
+        self.image_queue = image_queue
+        self.infer_queue = infer_queue
+        self.show_queue = show_queue
         self.target_size = target_size
         self.prob_threshold = prob_threshold
         self.nms_threshold = nms_threshold
         self.num_threads = num_threads
         self.use_gpu = use_gpu
+        self.global_cfg = global_cfg
 
         self.mean_vals = []
         self.norm_vals = [1 / 255.0, 1 / 255.0, 1 / 255.0]
@@ -116,9 +124,89 @@ class YoloV5s:
         self.class_names = [
             line.strip() for line in open(classes_path).readlines()
         ]
+        self.thread = threading.Thread(target=self.thread)  # 创建线程，并指定目标函数
+        self.thread.daemon = True  # 设置为守护线程（可选）
+        self.thread.start()
+
 
     def __del__(self):
         self.net = None
+
+    def thread(self):
+        while True:
+            if self.image_queue.empty():
+                time.sleep(0.005)
+                continue
+            img = self.image_queue.get()
+            self.__call__2(img)
+
+    def __call__2(self,img):
+        result = self.__call__(img=img)
+        self.infer_queue.put([img, result])
+        self.show_queue.put([img, result])
+        show = self.global_cfg.get_by_key("scrcpy_show_window")
+        if show:
+            try:
+                self.display_image(img, result)
+                cv.imshow('screen', img)
+                cv.waitKey(1)
+            except Exception as e:
+                log.logger.exception(e)
+
+
+
+    def display_image(self, screen, result):
+        if screen is None:
+            return
+        for obj in result:
+            try:
+                color = (2 ** (obj.label % 9) - 1, 2 ** ((obj.label + 4) % 9) - 1, 2 ** ((obj.label + 8) % 9) - 1)
+
+                cv.rectangle(screen,
+                             (int(obj.rect.x), int(obj.rect.y)),
+                             (int(obj.rect.x + obj.rect.w), int(obj.rect.y + + obj.rect.h)),
+                             color, 2
+                             )
+                text = f"{self.class_names[int(obj.label)]}:{obj.prob:.2f}"
+                self.plot_one_box([obj.rect.x, obj.rect.y, obj.rect.x + obj.rect.w, obj.rect.y + obj.rect.h], screen,
+                                      color=color, label=text, line_thickness=2)
+            except Exception as e:
+                log.logger.error("画框异常")
+                log.logger.exception(e)
+        # self.cv_show(screen)
+        # cv.waitKey(1)
+
+    def plot_one_box(self, x, img_source, color=None, label=None, line_thickness=None):
+        """
+        画框
+        :param x:
+        :param img_source:
+        :param color:
+        :param label:
+        :param line_thickness:
+        :return:
+        """
+        # 线条粗细
+        tl = line_thickness or round(0.002 * (img_source.shape[0] + img_source.shape[1]) / 2) + 1
+        color = color or [0, 255, 0]  # 默认绿色
+        c1, c2 = (int(x[0]), int(x[1])), (int(x[2]), int(x[3]))  # 转换坐标为整数
+
+        # 画框
+        cv.rectangle(img_source, c1, c2, color, thickness=tl, lineType=cv.LINE_AA)
+
+        if label:
+            tf = max(tl - 1, 2)  # 文本字体大小
+            text_color = [255, 255, 255]  # 默认白色，可以考虑通过参数传递
+            text_color = text_color if color is None else color  # 如果有颜色参数，则使用此颜色作为文字颜色
+
+            # 计算文本位置
+            # t_size = cv.getTextSize(label, 0, fontScale=tl / 3, thickness=tf)[0]
+            # c2 = c1[0] + t_size[0], c1[1] - t_size[1] - 3
+
+            # 在原位置绘制文本，无背景
+            cv.putText(img_source, label, (c1[0], c1[1] - 2), 0, tl / 3, text_color, thickness=tf,
+                       lineType=cv.LINE_AA)
+
 
     def __call__(self, img):
         img_w = img.shape[1]
@@ -296,9 +384,7 @@ class YoloV5s:
                 except:  # possible CUDA error https://github.com/ultralytics/yolov3/issues/1139
                     # log.logger.info(x, i, x.shape, i.shape)
                     pass
-
             output[xi] = x[i]
             if (time.time() - t) > time_limit:
                 break  # time limit exceeded
-
         return output

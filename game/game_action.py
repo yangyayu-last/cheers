@@ -8,6 +8,7 @@ from typing import Tuple
 
 import cv2
 
+from game import GameControl
 from game.Gameloop import GameLoop
 from game.attack.attack_master import AttackMaster
 from logger import log
@@ -16,7 +17,7 @@ from utils.cvmatch import image_match_util
 from utils.dnf_config import DnfConfig
 from utils.template_util import TemplateUtil
 from utils.yolov5 import YoloV5s
-from game.game_control import GameControl
+
 from adb.scrcpy_adb import ScrcpyADB
 import time
 import cv2 as cv
@@ -129,15 +130,15 @@ class AutoCleaningQueue:
 
 class GameAction:
 
-    def __init__(self, ctrl: GameControl):
+    def __init__(self, ctrl: GameControl,infer_queue):
         self.global_cfg = DnfConfig()
         self.ctrl = ctrl
         self.global_cfg = ctrl.adb.global_cfg
         self.param = GameParamVO()
-        self.attack = AttackMaster(ctrl)
+        self.attack = AttackMaster(self.global_cfg,self.ctrl)
         self.yolo = self.ctrl.adb.yolo
         self.adb = self.ctrl.adb
-
+        self.infer_queue = infer_queue
         # 获取当前脚本的绝对路径
         script_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -176,14 +177,26 @@ class GameAction:
 
     def find_result(self):
         while True:
-            screen = self.ctrl.adb.draw_screem
-            if screen is None:
-                time.sleep(0.01)
-                continue
-            result = self.ctrl.adb.result
-            self.cv_show(screen)
-            # cv.waitKey(1)
-            return screen, result
+            try:
+                if self.infer_queue.empty():
+                    time.sleep(0.001)
+                    continue
+                image, boxs = self.infer_queue.get()
+                # self.cv_show(image)
+                return image, boxs
+            except Exception as e:
+                log.logger.exception(e)
+
+    # def find_result(self):
+    #     while True:
+    #         screen = self.ctrl.adb.draw_screem
+    #         if screen is None:
+    #             time.sleep(0.01)
+    #             continue
+    #         result = self.ctrl.adb.result
+    #         self.cv_show(screen)
+    #         # cv.waitKey(1)
+    #         return screen, result
 
     @staticmethod
     def start_game(self):
@@ -235,7 +248,7 @@ class GameAction:
                                       color=color, label=text, line_thickness=2)
             except Exception as e:
                 log.logger.error("画框异常")
-                log.logger.error(e)
+                log.logger.exception(e)
         # self.cv_show(screen)
         cv.waitKey(1)
 
@@ -290,11 +303,14 @@ class GameAction:
         lax, lay = 0, 0  # 英雄上次循环的坐标
         move_door_cnt = 0
         hero_no = 0
+        #找不到方向的次数
+        direction_no = 0
         first_find_door_time = None
         while True:
             screen, result = self.find_result()
             # 2 判断是否过图成功
-            ada_image = cv.adaptiveThreshold(cv.cvtColor(self.ctrl.adb.last_screen, cv.COLOR_BGR2GRAY), 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, 13, 3)
+            # ada_image = cv.adaptiveThreshold(cv.cvtColor(self.ctrl.adb.last_screen, cv.COLOR_BGR2GRAY), 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, 13, 3)
+            ada_image = cv.adaptiveThreshold(cv.cvtColor(screen, cv.COLOR_BGR2GRAY), 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, 13, 3)
             if np.sum(ada_image) <= 600000:
                 log.logger.info('*******************************过图成功*******************************')
                 self.param.mov_start = False
@@ -312,7 +328,8 @@ class GameAction:
             if map_distinguish == 1:
                 # 1 先确定要行走的方向
                 if direction is None:
-                    flag, cur_room = room_calutil.find_cur_room(self.adb.last_screen,self.param.cur_room)
+                    # flag, cur_room = room_calutil.find_cur_room(self.adb.last_screen,self.param.cur_room)
+                    flag, cur_room = room_calutil.find_cur_room(screen,self.param.cur_room)
                     if flag is False:
                         route_id, cur_room, point = self.get_cur_room_index()
                     #不在根据小地图特诊确定，直接使用大图（大地图模型识别有误差）
@@ -353,17 +370,19 @@ class GameAction:
                     hero_no = 0
                     self.no_hero_handle(result)
                 continue
-
             if map_distinguish == 2:
                 #找出当前房间号
-                flag, cur_room = room_calutil.find_cur_room(self.adb.last_screen, self.param.cur_room)
+                # flag, cur_room = room_calutil.find_cur_room(self.adb.last_screen, self.param.cur_room)
+                flag, cur_room = room_calutil.find_cur_room(screen, self.param.cur_room)
                 #不使用大地图匹配，大地图目前识别不到
                 # if flag is False:
                 #     route_id, cur_room, point = self.get_cur_room_index()
-                self.param.cur_room = cur_room
                 if cur_room is None:
-                    log.logger.info('没有找到地图和当前房间')
-                    return result
+                    log.logger.info(f'没有检测到地图和当前房间,使用上一次的当前房间结果{self.param.cur_room}')
+                    # return result
+                    cur_room = self.param.cur_room
+                else:
+                    self.param.cur_room = cur_room
                 _, next_room = room_calutil.get_next_room(cur_room, self.param.is_succ_sztroom)
                 self.param.cur_room = cur_room
                 self.param.next_room = next_room
@@ -373,8 +392,11 @@ class GameAction:
                 direction = self.move_to_go(hero,self.param.next_room)
                 screen, result = self.find_result()
                 if direction is None:
+                    direction_no += 1
+                    if direction_no > 2:
+                        direction_no = 0
+                        self.no_hero_handle(result)
                     continue
-
             hx, hy = get_detect_obj_bottom(hero)
             diff = abs(hx-lax)+abs(hy-lay)
             # 如果数据没什么变化，说明卡墙了
@@ -402,7 +424,6 @@ class GameAction:
                 continue
             else:
                 log.logger.info('没有找到方向门，继续找')
-
             time.sleep(0.1)
             move_door_cnt += 1
             max_cnt = 30
@@ -501,25 +522,31 @@ class GameAction:
             self.adb.touch_move(x, y)
 
 
-    def except_pass_map(self):
+    def except_pass_map(self,screen):
         """
         是否异常的过图，捡装备不小心过图时，调用这个
         :return:
         """
-        ada_image = cv.adaptiveThreshold(cv.cvtColor(self.ctrl.adb.last_screen, cv.COLOR_BGR2GRAY), 255,
+        # ada_image = cv.adaptiveThreshold(cv.cvtColor(self.ctrl.adb.last_screen, cv.COLOR_BGR2GRAY), 255,
+        #                                  cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, 13, 3)
+        ada_image = cv.adaptiveThreshold(cv.cvtColor(screen, cv.COLOR_BGR2GRAY), 255,
                                          cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, 13, 3)
         if np.sum(ada_image) <= 600000:
             log.logger.info('*******************************捡装备不小心过图了*******************************')
             self.param.mov_start = False
             self.adb.touch_end(0, 0)
-            while np.sum(cv.adaptiveThreshold(cv.cvtColor(self.ctrl.adb.last_screen, cv.COLOR_BGR2GRAY), 255,
+            # while np.sum(cv.adaptiveThreshold(cv.cvtColor(self.ctrl.adb.last_screen, cv.COLOR_BGR2GRAY), 255,
+            #                                   cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, 13, 3)) >= 600000:
+            while np.sum(cv.adaptiveThreshold(cv.cvtColor(screen, cv.COLOR_BGR2GRAY), 255,
                                               cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, 13, 3)) >= 600000:
                 time.sleep(0.2)
-            flag, cur_room = room_calutil.find_cur_room(self.adb.last_screen,self.param.cur_room)
+            # flag, cur_room = room_calutil.find_cur_room(self.adb.last_screen,self.param.cur_room)
+            flag, cur_room = room_calutil.find_cur_room(screen,self.param.cur_room)
             cnt = 0
             while not flag and cnt <= 10:
                 time.sleep(0.2)
-                flag, cur_room = room_calutil.find_cur_room(self.adb.last_screen,self.param.cur_room)
+                # flag, cur_room = room_calutil.find_cur_room(self.adb.last_screen,self.param.cur_room)
+                flag, cur_room = room_calutil.find_cur_room(screen,self.param.cur_room)
                 cnt += 1
             self.param.cur_room = cur_room if flag else self.param.next_room
             return True
@@ -817,27 +844,43 @@ class GameAction:
         except Exception as e:
             log.logger.info('没有找到再次挑战按钮:', e)
 
-    def test(self):
-        log.logger.info(f'开始释放房间{self.param.cur_room}的固定技能。。。')
-        self.attack.room_skill(self.param.cur_room)
+def test(self):
+    log.logger.info(f'开始释放房间{self.param.cur_room}的固定技能。。。')
+    self.attack.room_skill(self.param.cur_room)
 
 def run1():
+    image_queue = AutoCleaningQueue(maxsize=3)
+    infer_queue = AutoCleaningQueue(maxsize=3)
+    show_queue = AutoCleaningQueue(maxsize=3)
     frame_counter = 0
-    ctrl = GameControl(ScrcpyADB(1384))  # 1384
-    action = GameAction(ctrl)
-    loop = GameLoop(action)
+    ctrl = GameControl(ScrcpyADB(image_queue,infer_queue,show_queue,max_width=1384))  # 1384
+    action = GameAction(ctrl,infer_queue)
+    loop = GameLoop(action,infer_queue)
     while True:
         try:
-            time.sleep(0.01)
-            loop.update()
-            #检测是否重新挑战或修理装备
-            if frame_counter % 3 == 0:
-                action.again()
+            if infer_queue.empty():
+                time.sleep(0.001)
+                continue
+            image, boxs = infer_queue.get()
+            # action.display_image(image, boxs)
+            # action.cv_show(image)
+            loop.update(image, boxs)
         except Exception as e:
             action.param.mov_start = False
-            log.logger.info(f'出现异常:{e}')
-            traceback.print_exc()
-log.logger.info('程序结束...')
+            log.logger.exception(e)
+
+    # while True:
+    #     try:
+    #         time.sleep(0.01)
+    #         loop.update()
+    #         #检测是否重新挑战或修理装备
+    #         if frame_counter % 3 == 0:
+    #             action.again()
+    #     except Exception as e:
+    #         action.param.mov_start = False
+    #         log.logger.info(f'出现异常:{e}')
+    #         traceback.print_exc()
+    # log.logger.info('程序结束...')
 
 def run():
     ctrl = GameControl(ScrcpyADB(1384)) #1384
@@ -942,7 +985,7 @@ if __name__ == '__main__':
     启动入口
     :author: Cheers。。
     """
-    # run()
+    run()
     test()
     frame_queue = AutoCleaningQueue(maxsize=10)
     show_process = multiprocessing.Process(target=show_frame, args=(frame_queue,))

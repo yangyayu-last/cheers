@@ -5,6 +5,7 @@ import cv2 as cv
 import time
 import adbutils
 
+
 from logger import log
 from utils import room_calutil
 from utils.cvmatch import image_match_util
@@ -13,13 +14,16 @@ from utils.yolov5 import YoloV5s
 
 
 class ScrcpyADB:
-    def __init__(self, max_width=0, real_width=2336):
+    def __init__(self,image_queue,infer_queue,show_queue, max_width=0, real_width=2336):
         self.global_cfg = DnfConfig()
-        self.yolo = YoloV5s(target_size=640,
+        self.yolo = YoloV5s(image_queue,infer_queue,show_queue,self.global_cfg,
+                            target_size=640,
                             prob_threshold=0.25,
                             nms_threshold=0.45,
                             num_threads=4,
                             use_gpu=True)
+        #队列
+        self.queue = image_queue
         if self.global_cfg.get_by_key('device_wifi_enable') == 1:
             # 获取设备列表并连接到目标设备
             self.adb = adbutils.AdbClient(host="127.0.0.1", port=5037)
@@ -49,10 +53,16 @@ class ScrcpyADB:
         self.result = None
         self.window_size = (0, 0)  # 窗口大小 宽高 w,h
         # self.window_size = (720, 480)  # 窗口大小 宽高 w,h
-        client.add_listener(scrcpy.EVENT_FRAME, self.on_frame)
+        client.add_listener(scrcpy.EVENT_FRAME, self.on_frame2)
         client.start(threaded=True)
         self.client = client
         self.processing_frame = False  # 用于标记是否正在处理帧
+
+    def on_frame2(self, frame: cv.Mat):
+        if frame is not None:
+            self.queue.put(frame)
+            if self.window_size == (0, 0):
+                self.window_size = frame.shape[1], frame.shape[0]
 
     def on_frame(self, frame: cv.Mat):
         if frame is not None:

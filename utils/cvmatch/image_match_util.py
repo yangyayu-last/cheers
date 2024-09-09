@@ -590,7 +590,8 @@ def cvmatch_template_best(im_search, im_source,room, *crop):
         rect, confidence = (rx, ry, rw, rh), max_val
         return generate_result(rect, confidence)
     except Exception as e:
-        log.logger.info(f'cvmatch_template_best error:{e}')
+        # log.logger.info(f'cvmatch_template_best error:{e}')
+        log.logger.exception(e)
         return None
 
 

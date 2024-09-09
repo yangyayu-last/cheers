@@ -247,6 +247,9 @@ def find_cur_room(screen,cur_room, confi=0.7):
                     flag = True
                     most_similar_room = current_room
 
+    if cur_room is None:
+        cur_room = most_similar_room
+        log.logger.warn(f'当前房间为空,直接使用匹配结果')
     if most_similar_room is not None:
         log.logger.info(f'匹配房间结果：{flag},房间行列号:{most_similar_room}')
         if cur_room[0] - most_similar_room[0] not in {0, 1,-1}:

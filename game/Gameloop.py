@@ -12,14 +12,15 @@ class GameState:
 
 class GameLoop:
 
-    def __init__(self, action):
+    def __init__(self, action,infer_queue):
         self.action = action
         self.state = GameState.IDLE  # 初始状态为 idle
         self.last_action_time = time.time()  # 记录上一次动作时间，用于防止动作停滞
+        self.infer_queue = infer_queue
 
-    def update(self):
+    def update(self,screen, result):
         # 获取当前屏幕和分析结果
-        screen, result = self.action.find_result()
+        # screen, result = self.action.find_result()
 
         # 优先级 1：敌人
         if len(self.action.find_tag(result, ['Monster', 'Monster_ds', 'Monster_szt'])) > 0:

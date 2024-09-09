@@ -4,9 +4,9 @@ from time import sleep
 import cv2
 import yaml
 
-from adb.scrcpy_adb import ScrcpyADB
-from logger import log
 from game import GameControl
+from logger import log
+
 from utils import dnf_config, room_calutil
 from utils.dnf_config import DnfConfig
 from vo.game_param_vo import GameParamVO
@@ -17,12 +17,12 @@ def get_by_key(yaml_obj, *key):
 
 
 class AttackMaster():
-    def __init__(self, ctrl: GameControl):
+    def __init__(self, global_cfg, ctrl: GameControl):
         self.ctrl = ctrl
         # self.param = param
         # global_cfg = DnfConfig()
         # self.global_cfg = global_cfg
-        self.global_cfg = ctrl.adb.global_cfg
+        self.global_cfg = global_cfg
         cur_role = self.global_cfg.get_by_key('cur_role')
         role_config = self.global_cfg.get_by_key('role_config')
         # role_config为list，每个元素包含role_name和path，遍历找出role_name=cur_role的配置
@@ -131,7 +131,7 @@ class AttackMaster():
 
     def do_skills(self, buff_skills,if_vaild=True):
         # 在同一画面校验是否cd
-        last_screen = self.ctrl.adb.last_screen
+        # last_screen = self.ctrl.adb.last_screen
         for skill in buff_skills:
             try:
                 skill_name = get_by_key(skill, 'skill_name')
@@ -180,8 +180,8 @@ class AttackMaster():
 
 
 if __name__ == '__main__':
-    ctrl = GameControl(ScrcpyADB(1384))
-    attack_master = AttackMaster(ctrl)
+    # ctrl = GameControl(ScrcpyADB(1384))
+    # attack_master = AttackMaster(ctrl)
     # attack_master.room_skill((1,1))
     # attack_master.hurt_skill()
     # attack_master.state_skill()
