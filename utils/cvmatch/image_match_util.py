@@ -545,7 +545,7 @@ def match_template_best(im_search, im_source, *crop, resize_rate=1):
             res['rect'] = (int(rect[0] / resize_rate + x), int(rect[1] / resize_rate + y), int(rect[2] / resize_rate), int(rect[3] / resize_rate))
         return res
     except Exception as e:
-        log.logger.info(f'match_template_best error:{e}')
+        log.logger.exception(e)
         return None
 
 

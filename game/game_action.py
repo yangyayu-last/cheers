@@ -252,7 +252,7 @@ class GameAction:
         # self.cv_show(screen)
         cv.waitKey(1)
 
-    def get_cur_room_index(self):
+    def get_cur_room_index(self,screen):
         route_map = None
         result = None
         fail_cnt = 0
@@ -260,7 +260,7 @@ class GameAction:
             ##### 修改位置(2462, 173)
             self.ctrl.click(2120, 144)
             time.sleep(0.5)
-            screen = self.ctrl.adb.last_screen
+            # screen = self.ctrl.adb.last_screen
             if screen is None:
                 continue
             start_time = time.time()
@@ -279,7 +279,8 @@ class GameAction:
 
         if route_map is not None:
             time.sleep(0.2)
-            tmp = self.find_one_tag(self.yolo(self.ctrl.adb.last_screen), 'map')
+            # tmp = self.find_one_tag(self.yolo(self.ctrl.adb.last_screen), 'map')
+            tmp = self.find_one_tag(self.yolo(screen), 'map')
             if tmp is not None:
                 ##### 修改位置(2462, 173)
                 self.ctrl.click(2120, 144)
@@ -331,7 +332,7 @@ class GameAction:
                     # flag, cur_room = room_calutil.find_cur_room(self.adb.last_screen,self.param.cur_room)
                     flag, cur_room = room_calutil.find_cur_room(screen,self.param.cur_room)
                     if flag is False:
-                        route_id, cur_room, point = self.get_cur_room_index()
+                        route_id, cur_room, point = self.get_cur_room_index(screen)
                     #不在根据小地图特诊确定，直接使用大图（大地图模型识别有误差）
                     # route_id, cur_room, point = self.get_cur_room_index()
                     self.param.cur_room = cur_room
@@ -401,7 +402,7 @@ class GameAction:
             diff = abs(hx-lax)+abs(hy-lay)
             # 如果数据没什么变化，说明卡墙了
             lax, lay = hx, hy
-            log.logger.info(f'正在过图：英雄位置：{hx},{hy}，与上次的位置变化值：{diff}...')
+            log.logger.info(f'正在过图：英雄位置：{hx},{hy}，与上次的位置变化值：{diff}')
 
             # 4 按照对应方向找对应的门
             doortag = room_calutil.get_tag_by_direction(direction)
@@ -473,7 +474,7 @@ class GameAction:
         self.param.next_angle = (self.param.next_angle + 1) % 4
         sx, sy = self.ctrl.calc_mov_point(angle)
         self.param.mov_start = False
-        self.ctrl.attack(3)
+        self.ctrl.attack(1)
         self.move_to_xy(sx, sy)
         time.sleep(mov_time)
 
@@ -791,7 +792,7 @@ class GameAction:
             else:
                 return
 
-    def again(self):
+    def again(self,image):
         log.logger.info(f'当前房间号{self.param.cur_room}')
         try:
             # 截取区域 xywh
@@ -799,7 +800,8 @@ class GameAction:
             crop = (1896, 121, 258, 65)
             crop = tuple(int(value * room_calutil.zoom_ratio) for value in crop)
             # 模版匹配再次挑战按钮
-            result = image_match_util.match_template_best(self.again_button_img, self.ctrl.adb.last_screen, crop)
+            # result = image_match_util.match_template_best(self.again_button_img, self.ctrl.adb.last_screen, crop)
+            result = image_match_util.match_template_best(self.again_button_img, image, crop)
             if result is not None:
                 # 通过房间号来判断，但如果重新启动py程序的时候，就会导致参数被初始化为（1，0）。进而无法继续游戏
                 # if self.param.cur_room != (1, 5) and self.param.cur_room != (1, 4):
@@ -812,7 +814,8 @@ class GameAction:
             # crop = (122, 55, 95, 80)
             crop = (149, 47, 40, 60)
             crop = tuple(int(value * room_calutil.zoom_ratio) for value in crop)
-            repair_res = image_match_util.match_template_best(self.repair_equipment, self.ctrl.adb.last_screen, crop)
+            # repair_res = image_match_util.match_template_best(self.repair_equipment, self.ctrl.adb.last_screen, crop)
+            repair_res = image_match_util.match_template_best(self.repair_equipment, image, crop)
             if repair_res is not None:
                 log.logger.info('发现修理装备按钮,点击修理装备')
                 x, y, w, h = repair_res['rect']
@@ -829,7 +832,8 @@ class GameAction:
             crop = (1896, 121, 258, 65)
             crop = tuple(int(value * room_calutil.zoom_ratio) for value in crop)
             # 模版匹配再次挑战按钮
-            result = image_match_util.match_template_best(self.again_button_img, self.ctrl.adb.last_screen, crop)
+            # result = image_match_util.match_template_best(self.again_button_img, self.ctrl.adb.last_screen, crop)
+            result = image_match_util.match_template_best(self.again_button_img, image, crop)
             if result is not None:
                 # 发现了再次挑战，就重开
                 log.logger.info('发现再次挑战按钮,点击重开')
@@ -865,6 +869,9 @@ def run1():
             # action.display_image(image, boxs)
             # action.cv_show(image)
             loop.update(image, boxs)
+            frame_counter += 1
+            if frame_counter % 5 == 0:
+                action.again(image)
         except Exception as e:
             action.param.mov_start = False
             log.logger.exception(e)
