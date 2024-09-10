@@ -135,6 +135,16 @@ class GameControl:
         y = y + random.randint(-5, 5)
         return x, y
 
+    def attack2(self, t: float = 0.04):
+        """
+        按住攻击
+        """
+        x, y = self.cfg.get_by_key('coordinates', 'attack')
+        self.adb.touch_start(x, y)
+        time.sleep(t)
+        self.adb.touch_end(x, y)
+
+
 if __name__ == '__main__':
     ctl = GameControl(ScrcpyADB(1380))
     ctl.move(0,1)

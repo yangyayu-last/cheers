@@ -146,6 +146,39 @@ def get_next_room(cur_room, is_succ_sztroom: bool = False):
         next_room = room_route[index + 1]
         return index + 1, next_room
 
+def get_next_room2(cur_room, is_succ_sztroom: bool = False):
+    # ind,cur_room = get_cur_room_index(point)
+    if cur_room == (1, 2):
+        log.logger.info('进入狮子头前一房间')
+
+    # 狮子头房间刷过了，不用去了
+    if is_succ_sztroom and cur_room == (1, 2):
+        log.logger.info("狮子头刷过了，不用去了")
+        return 7, (1, 3)
+
+    # vals转换成连表的形式，用于获取下一个
+    if cur_room in room_route:
+        try:
+            index = room_route.index(cur_room)
+        except ValueError:
+            index = all_room.index(cur_room,0)
+        if index >= len(room_route) - 1:
+            log.logger.warn(f'【警告】返回none')
+            # return None,None
+            #先返回第一个房间，测试
+            return None,(0,1)
+        next_room = room_route[index + 1]
+        return index + 1, next_room
+    else:
+        # 错误房间就三个，分别枚举算了
+        if cur_room == (0, 0):
+            return None, (1, 0)
+        if cur_room == (0, 1):
+            return None, (0, 2)
+        if cur_room == (0, 2):
+            return None, (1, 2)
+        return None, (1,0)
+
 
 def get_run_direction(cur_room,next_room):
     # (1,0)-(2,0) 走下

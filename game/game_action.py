@@ -386,7 +386,7 @@ class GameAction:
                     cur_room = self.param.cur_room
                 else:
                     self.param.cur_room = cur_room
-                _, next_room = room_calutil.get_next_room(cur_room, self.param.is_succ_sztroom)
+                _, next_room = room_calutil.get_next_room2(cur_room, self.param.is_succ_sztroom)
                 # self.param.cur_room = cur_room
                 if next_room is not None:
                     self.param.next_room = next_room
@@ -487,6 +487,9 @@ class GameAction:
             if next_room == (1, 1) or cur_room == (1, 2):
                 mx, my = self.ctrl.calc_move_point_direction('left')
                 self.move_to_xy(mx, my)
+                return 'left'
+            elif cur_room[0] == 1 and cur_room[1] > 2 and not is_succ_sztroom:
+                #走过狮子头的图了，往回走
                 return 'left'
         screen, result = self.find_result()
         tag = self.find_tag(result, ['go', 'go_d', 'go_r', 'go_u'])
@@ -877,8 +880,8 @@ def run1():
                 log.logger.info("没有找到任何目标超出配置次数，随机移动")
                 loop.no_task_no = 0
                 action.no_hero_handle(boxs,0.5)
-            # if frame_counter % 5 == 0:
-                # action.again(image)
+            if frame_counter % 5 == 0:
+                action.again(image)
         except Exception as e:
             action.param.mov_start = False
             log.logger.exception(e)
