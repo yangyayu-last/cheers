@@ -14,10 +14,12 @@
 scrcpy_show_window: False
 #地图识别模式1:小地图识别，2:箭头识别
 map_distinguish: 2
+#debug功能:是否在本地保存小地图识别图像,1:保存，2:不保存
+map_img_save: 2
 
 #adb无线投屏，device_wifi_enable是否启用：1启动，2禁用。device_ip设备的IP地址
 device_wifi_enable: 1
-device_ip: 192.168.31.125:41805
+device_ip: 192.168.137.175:43291
 
 # 链接的设备名或ip端口
 #device: adb-24ed1083-yGX7n1._adb-tls-connect._tcp.

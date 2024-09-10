@@ -6,6 +6,9 @@ from logger import log
 import numpy as np
 import cv2
 
+from utils.dnf_config import DnfConfig
+
+global_cfg = DnfConfig()
 
 def filter_good_point(matches, kp_src, kp_sch, kp_sch_point, kp_src_matches_point):
     """ 筛选最佳点 """
@@ -567,12 +570,15 @@ def cvmatch_template_best(im_search, im_source,room, *crop):
         # x, y = convert_resolution(x, y)
 
         #保存图片
-        cv2.imwrite("im_source.png",im_source)
+        key = global_cfg.get_by_key('map_img_save')
+        if key == 1:
+            cv2.imwrite("im_source.png",im_source)
 
         # 截剪im_source
         im_source = im_source[y:y + h, x:x + w]
         # 保存裁剪后的图片
-        cv2.imwrite(f'im_source{x}-{y}-{room}.png', im_source)
+        if key == 1:
+            cv2.imwrite(f'im_source{x}-{y}-{room}.png', im_source)
 
         if im_source.shape[0] < m_h or im_source.shape[1] < m_w:
             log.logger.info('模板大小大于原图')
