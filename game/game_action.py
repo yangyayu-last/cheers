@@ -371,13 +371,15 @@ class GameAction:
                     hero_no = 0
                     self.no_hero_handle(result)
                 continue
+
             if map_distinguish == 2:
                 #找出当前房间号
                 # flag, cur_room = room_calutil.find_cur_room(self.adb.last_screen, self.param.cur_room)
-                flag, cur_room = room_calutil.find_cur_room(screen, self.param.cur_room)
+                flag, cur_room = room_calutil.find_cur_room2(screen, self.param.cur_room)
                 #不使用大地图匹配，大地图目前识别不到
                 # if flag is False:
                 #     route_id, cur_room, point = self.get_cur_room_index()
+
                 if cur_room is None:
                     log.logger.info(f'没有检测到地图和当前房间,使用上一次的当前房间结果{self.param.cur_room}')
                     # return result
@@ -385,12 +387,14 @@ class GameAction:
                 else:
                     self.param.cur_room = cur_room
                 _, next_room = room_calutil.get_next_room(cur_room, self.param.is_succ_sztroom)
-                self.param.cur_room = cur_room
-                self.param.next_room = next_room
+                # self.param.cur_room = cur_room
+                if next_room is not None:
+                    self.param.next_room = next_room
+                log.logger.info(f'当前房间号,{cur_room},下一房间号:{self.param.next_room},匹配的下一房间号:{next_room}')
+                # 重新，根据箭头移动方法,返回移动的方向
+                direction = self.move_to_go(hero,self.param.cur_room,self.param.next_room,self.param.is_succ_sztroom)
                 if cur_room == (1, 1):
                     self.param.is_succ_sztroom = True
-                # 重新，根据箭头移动方法,返回移动的方向
-                direction = self.move_to_go(hero,self.param.next_room)
                 screen, result = self.find_result()
                 if direction is None:
                     direction_no += 1
@@ -402,7 +406,7 @@ class GameAction:
             diff = abs(hx-lax)+abs(hy-lay)
             # 如果数据没什么变化，说明卡墙了
             lax, lay = hx, hy
-            log.logger.info(f'正在过图：英雄位置：{hx},{hy}，与上次的位置变化值：{diff}')
+            log.logger.info(f'正在过图：英雄位置：{hx},{hy},方向:{direction}，与上次的位置变化值：{diff}')
 
             # 4 按照对应方向找对应的门
             doortag = room_calutil.get_tag_by_direction(direction)
@@ -478,11 +482,12 @@ class GameAction:
         self.move_to_xy(sx, sy)
         time.sleep(mov_time)
 
-    def move_to_go(self, hero, next_room):
-        if next_room == (1, 1):
-            mx, my = self.ctrl.calc_move_point_direction('left')
-            self.move_to_xy(mx, my)
-            return 'left'
+    def move_to_go(self, hero, cur_room, next_room, is_succ_sztroom: bool = False):
+        if not is_succ_sztroom:
+            if next_room == (1, 1) or cur_room == (1, 2):
+                mx, my = self.ctrl.calc_move_point_direction('left')
+                self.move_to_xy(mx, my)
+                return 'left'
         screen, result = self.find_result()
         tag = self.find_tag(result, ['go', 'go_d', 'go_r', 'go_u'])
 
@@ -866,12 +871,14 @@ def run1():
                 time.sleep(0.001)
                 continue
             image, boxs = infer_queue.get()
-            # action.display_image(image, boxs)
-            # action.cv_show(image)
             loop.update(image, boxs)
             frame_counter += 1
-            if frame_counter % 5 == 0:
-                action.again(image)
+            if loop.no_task_no > 20:
+                log.logger.info("没有找到任何目标超出配置次数，随机移动")
+                loop.no_task_no = 0
+                action.no_hero_handle(boxs,0.5)
+            # if frame_counter % 5 == 0:
+                # action.again(image)
         except Exception as e:
             action.param.mov_start = False
             log.logger.exception(e)

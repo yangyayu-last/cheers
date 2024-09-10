@@ -17,6 +17,8 @@ class GameLoop:
         self.state = GameState.IDLE  # 初始状态为 idle
         self.last_action_time = time.time()  # 记录上一次动作时间，用于防止动作停滞
         self.infer_queue = infer_queue
+        #没有发现任何目标的次数，有可能卡在哪个缝隙了
+        self.no_task_no = 0
 
     def update(self,screen, result):
         # 获取当前屏幕和分析结果
@@ -29,6 +31,7 @@ class GameLoop:
                 self.state = GameState.ATTACKING_MONSTER
             # 持续攻击怪物，直到没有怪物为止
             self.action.attack_master()
+            self.no_task_no = 0
             return
 
         # 优先级 2：装备
@@ -38,6 +41,7 @@ class GameLoop:
                 self.state = GameState.PICKING_UP_EQUIPMENT
             # 持续捡装备，直到没有装备为止
             self.action.pick_up_equipment()
+            self.no_task_no = 0
             return
 
         # 优先级 3：门（移动到下一个房间）
@@ -47,6 +51,7 @@ class GameLoop:
                 self.state = GameState.MOVING_TO_NEXT_ROOM
             # 持续移动到下一个房间，直到进入房间为止
             self.action.move_to_next_room()
+            self.no_task_no = 0
             return
 
         # 优先级 4：选择卡片（如果没有其他更高优先级的任务）
@@ -56,10 +61,12 @@ class GameLoop:
                 self.state = GameState.SELECTING_CARD
             # 持续选择卡片，直到完成
             self.action.reset_start_game()
+            self.no_task_no = 0
             return
 
         # 如果没有任何需要执行的动作，进入空闲状态
         log.logger.info('没有发现任何目标，进入空闲状态...')
+        self.no_task_no += 1
         self.state = GameState.IDLE
 
         # 记录当前的时间，并计算每次动作的间隔

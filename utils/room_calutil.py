@@ -102,6 +102,8 @@ def get_recent_room(cur_room):
 
 def get_next_room(cur_room, is_succ_sztroom: bool = False):
     # ind,cur_room = get_cur_room_index(point)
+    if cur_room == (1, 2):
+        log.logger.info('进入狮子头前一房间')
     ind = None
     for i, room in enumerate(room_route):
         if cur_room == room_route[i]:
@@ -137,7 +139,10 @@ def get_next_room(cur_room, is_succ_sztroom: bool = False):
             index = all_room.index(cur_room,0)
 
         if index >= len(room_route) - 1:
-            return None,None
+            log.logger.warn(f'【警告】返回none')
+            # return None,None
+            #先返回第一个房间，测试
+            return None,(0,1)
         next_room = room_route[index + 1]
         return index + 1, next_room
 
@@ -263,6 +268,42 @@ def find_cur_room(screen,cur_room, confi=0.7):
         return flag, cur_room
 
     return flag, most_similar_room
+
+
+def find_cur_room2(screen,cur_room, confi=0.7):
+    """
+    直接返回当前房间，只匹配狮子头前的房间，和狮子头房间
+    :param screen: 当前帧
+    :param confi: 默认最小置信度
+    :return: flag 是否匹配成功, room
+    """
+    room_ = cur_room[0] == 1 and cur_room[1] == 2
+    room_2 = cur_room[0] == 1 and cur_room[1] == 1
+    if room_ or room_2:
+        flag = False
+        most_similar_room = None
+        if _img_map is None or _cfgs is None:
+            load_map_template()
+        if isinstance(_cfgs, list):
+            confidence = confi
+            for cfg in _cfgs:
+                # 识别区域
+                crop = cfg['rect']
+                img_name = cfg['img_name']
+                img = _img_map[img_name]
+                # 配置文件中的每一个地图
+                current_room = tuple(cfg['name'])
+                res = image_match_util.cvmatch_template_best(img, screen, current_room, crop, )
+                if res is not None:
+                    # 取可信度最高的匹配结果
+                    if res['confidence'] > confidence:
+                        confidence = res['confidence']
+                        flag = True
+                        most_similar_room = current_room
+        if flag is True:
+            #新增，匹配地图失败，直接返回预定路线中的地图
+            return flag, most_similar_room
+    return True,cur_room
 
 if __name__ == '__main__':
     t = rect_slice_index(Rect(100, 100, 100, 100), Size((10, 6)), (101.54, 145.864))
